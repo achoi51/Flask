@@ -7,37 +7,83 @@
 	let hasReceivedData: boolean = $state(false);
 	let permission: string = $state('unknown');
 
+	let debug = $state({
+		listening: false,
+		eventCount: 0,
+		lastBeta: null as number | null,
+		lastGamma: null as number | null,
+		lastAlpha: null as number | null,
+		lastAbsolute: null as boolean | null,
+		lastTimestamp: '',
+		userAgent: '',
+		secureContext: false,
+		deviceOrientationSupported: false,
+		requestPermissionSupported: false
+	});
+
+	let logs = $state<string[]>([]);
+
+	function addLog(message: string) {
+		const time = new Date().toLocaleTimeString();
+		logs = [`[${time}] ${message}`, ...logs].slice(0, 12);
+		console.log(message);
+	}
+
 	const requestPermission = async () => {
 		if (!browser) return;
+
+		addLog('requestPermission() called');
 
 		if (
 			'DeviceOrientationEvent' in window &&
 			typeof (DeviceOrientationEvent as any).requestPermission === 'function'
 		) {
 			try {
+				addLog('Using iOS-style requestPermission()');
 				const response = await (DeviceOrientationEvent as any).requestPermission();
 				permission = response;
+				addLog(`Permission response: ${response}`);
+
 				if (response === 'granted') {
 					startListening();
 				}
 			} catch (error) {
 				console.error('Error requesting device orientation permission:', error);
+				addLog(`Permission error: ${error instanceof Error ? error.message : String(error)}`);
 				permission = 'denied';
 			}
 		} else if ('DeviceOrientationEvent' in window) {
+			addLog('DeviceOrientationEvent exists, no explicit permission required');
 			permission = 'granted';
 			startListening();
 		} else {
+			addLog('DeviceOrientationEvent not supported');
 			permission = 'not-supported';
 		}
 	};
 
 	const startListening = () => {
 		if (!browser) return;
+
 		window.addEventListener('deviceorientation', onOrientationChange);
+		debug.listening = true;
+		addLog('Started listening for deviceorientation events');
 	};
 
 	const onOrientationChange = (event: DeviceOrientationEvent) => {
+		debug.eventCount += 1;
+		debug.lastBeta = event.beta;
+		debug.lastGamma = event.gamma;
+		debug.lastAlpha = event.alpha;
+		debug.lastAbsolute = event.absolute;
+		debug.lastTimestamp = new Date().toLocaleTimeString();
+
+		if (debug.eventCount <= 5 || debug.eventCount % 25 === 0) {
+			addLog(
+				`deviceorientation #${debug.eventCount}: beta=${event.beta}, gamma=${event.gamma}, alpha=${event.alpha}`
+			);
+		}
+
 		if (event.beta !== null && event.gamma !== null) {
 			const beta = event.beta;
 			const gamma = event.gamma;
@@ -57,26 +103,42 @@
 
 			if (!hasReceivedData) {
 				hasReceivedData = true;
+				addLog('First valid orientation payload received');
 			}
+		} else {
+			addLog('Orientation event received, but beta/gamma was null');
 		}
 	};
 
 	onMount(() => {
-		if (browser) {
-			if (
-				!(
-					'DeviceOrientationEvent' in window &&
-					typeof (DeviceOrientationEvent as any).requestPermission === 'function'
-				)
-			) {
-				requestPermission();
-			}
+		if (!browser) return;
+
+		debug.userAgent = navigator.userAgent;
+		debug.secureContext = window.isSecureContext;
+		debug.deviceOrientationSupported = 'DeviceOrientationEvent' in window;
+		debug.requestPermissionSupported =
+			'DeviceOrientationEvent' in window &&
+			typeof (DeviceOrientationEvent as any).requestPermission === 'function';
+
+		addLog(`Mounted. secureContext=${debug.secureContext}`);
+		addLog(`DeviceOrientationEvent supported=${debug.deviceOrientationSupported}`);
+		addLog(`requestPermission supported=${debug.requestPermissionSupported}`);
+
+		if (
+			!(
+				'DeviceOrientationEvent' in window &&
+				typeof (DeviceOrientationEvent as any).requestPermission === 'function'
+			)
+		) {
+			requestPermission();
 		}
 	});
 
 	onDestroy(() => {
 		if (browser && window) {
 			window.removeEventListener('deviceorientation', onOrientationChange);
+			debug.listening = false;
+			addLog('Stopped listening for deviceorientation events');
 		}
 	});
 
@@ -97,7 +159,7 @@
 	});
 </script>
 
-<div class="flex h-screen flex-col items-center justify-center bg-slate-800 text-white">
+<div class="flex min-h-screen flex-col items-center justify-center bg-slate-800 text-white">
 	{#if permission === 'unknown'}
 		<div class="text-center">
 			<h1 class="mb-4 text-2xl font-bold">Gravity Vectors</h1>
@@ -124,7 +186,6 @@
 		<div
 			class="relative mb-8 h-64 w-64 rounded-lg border-2 border-slate-500 bg-slate-900/50 shadow-lg"
 		>
-			<!-- Center Axis Lines -->
 			<div
 				class="absolute top-1/2 left-0 h-px w-full -translate-y-1/2 bg-slate-600"
 				aria-hidden="true"
@@ -134,26 +195,52 @@
 				aria-hidden="true"
 			></div>
 
-			<!-- Gravity Y Vector (Vertical Bar) -->
 			<div
 				class="absolute left-1/2 w-4 -translate-x-1/2 rounded-full bg-blue-400/80 transition-[height]"
 				style={yBarStyle}
 			></div>
 
-			<!-- Gravity X Vector (Horizontal Bar) -->
 			<div
 				class="absolute top-1/2 h-4 -translate-y-1/2 rounded-full bg-red-400/80 transition-[width]"
 				style={xBarStyle}
 			></div>
 
-			<!-- Labels -->
 			<span class="absolute top-1 right-2 text-xs text-red-400">gX</span>
 			<span class="absolute top-2 left-1 text-xs text-blue-400">gY</span>
 		</div>
 
-		<div class="absolute bottom-10 text-center font-mono">
+		<div class="mb-6 text-center font-mono">
 			<p>Gravity X: <span class="font-bold text-red-400">{gravityX.toFixed(3)}</span></p>
 			<p>Gravity Y: <span class="font-bold text-blue-400">{gravityY.toFixed(3)}</span></p>
 		</div>
 	{/if}
+
+	<!-- Debug Panel -->
+	<div class="mt-6 w-full max-w-md rounded-lg border border-slate-600 bg-slate-900 p-4 text-xs font-mono">
+		<h2 class="mb-3 text-sm font-bold text-yellow-300">Debug</h2>
+
+		<div class="grid grid-cols-2 gap-x-4 gap-y-1">
+			<div>permission</div><div>{permission}</div>
+			<div>hasReceivedData</div><div>{String(hasReceivedData)}</div>
+			<div>listening</div><div>{String(debug.listening)}</div>
+			<div>eventCount</div><div>{debug.eventCount}</div>
+			<div>lastBeta</div><div>{debug.lastBeta ?? 'null'}</div>
+			<div>lastGamma</div><div>{debug.lastGamma ?? 'null'}</div>
+			<div>lastAlpha</div><div>{debug.lastAlpha ?? 'null'}</div>
+			<div>absolute</div><div>{String(debug.lastAbsolute)}</div>
+			<div>lastEvent</div><div>{debug.lastTimestamp || 'none'}</div>
+			<div>secureContext</div><div>{String(debug.secureContext)}</div>
+			<div>orientationSupported</div><div>{String(debug.deviceOrientationSupported)}</div>
+			<div>requestPermission</div><div>{String(debug.requestPermissionSupported)}</div>
+		</div>
+
+		<div class="mt-4">
+			<div class="mb-1 text-slate-300">Logs</div>
+			<div class="max-h-48 overflow-auto rounded bg-slate-950 p-2">
+				{#each logs as log}
+					<div class="mb-1 break-all text-slate-300">{log}</div>
+				{/each}
+			</div>
+		</div>
+	</div>
 </div>
