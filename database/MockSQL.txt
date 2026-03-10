@@ -1,0 +1,73 @@
+--Syntax might need to be changed depending on version of sql used
+CREATE DATABASE Flask
+
+CREATE TABLE Chemicals (
+    ChemicalID int PRIMARY KEY,
+    ChemicalName varchar(255),
+    State varchar(255),
+    MeltingPoint int
+);
+
+CREATE TABLE ChemicalReactions (
+    ChemicalReactionID int PRIMARY KEY,
+    InputChemical1 int NOT NULL,
+    InputChemical2 int,
+    InputChemical3 int,
+    WrittenFormula varchar(255),
+    OutputChemical1 int NOT NULL,
+    OutputChemical2 int,
+    OutputChemical3 int,
+    FOREIGN KEY (InputChemical1) REFERENCES Chemicals(ChemicalID),
+    FOREIGN KEY (InputChemical2) REFERENCES Chemicals(ChemicalID),
+    FOREIGN KEY (InputChemical3) REFERENCES Chemicals(ChemicalID),
+    FOREIGN KEY (OutputChemical1) REFERENCES Chemicals(ChemicalID),
+    FOREIGN KEY (OutputChemical2) REFERENCES Chemicals(ChemicalID)
+);
+
+CREATE TABLE ActiveChemicals (
+    ActiveChemicalID int PRIMARY Key,
+    ChemicalID int,
+    XPosition float,
+    YPosition float,
+    FOREIGN KEY (ChemicalID) REFERENCES Chemicals(ChemicalID)
+)
+
+--Fill tables using csv files
+--Current csv files are mock files
+
+BULK INSERT Chemicals
+FROM 'Chemicals.csv'
+WITH
+(
+    DATAFILETYPE = 'char',
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+    FIRSTROW = 2
+);
+
+BULK INSERT ChemicalReactions
+FROM 'ChemicalReactions.csv'
+WITH
+(
+    DATAFILETYPE = 'char',
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+    FIRSTROW = 2
+);
+
+BULK INSERT ActiveChemicals
+FROM 'ActiveChemicals.csv'
+WITH
+(
+    DATAFILETYPE = 'char',
+    FIELDTERMINATOR = ',',
+    ROWTERMINATOR = '\n',
+);
+
+
+--When user exits website make a csv to save their 
+SELECT * FROM your_table_name
+INTO OUTFILE 'ActiveChemicals.csv'
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n';
