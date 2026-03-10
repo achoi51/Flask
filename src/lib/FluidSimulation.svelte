@@ -6,11 +6,16 @@
 
 	let {
 		gravity = { x: 0, y: -9.81 },
-		resolution = 70,
+		resolution = 56,
 		fluidColor = { r: 0.09, g: 0.4, b: 1.0 },
 		foamColor = { r: 0.75, g: 0.9, b: 1.0 },
 		colorDiffusionCoeff = 0.0008,
 		foamReturnRate = 0.5,
+		rocks = [
+			{ x: 1.2, y: 0.22, radius: 0.12 },
+			{ x: 2.0, y: 0.18, radius: 0.10 },
+			{ x: 2.8, y: 0.24, radius: 0.13 }
+		],
 		onclick
 	}: {
 		gravity?: { x: number; y: number };
@@ -20,8 +25,10 @@
 		foamColor?: { r: number; g: number; b: number };
 		colorDiffusionCoeff?: number;
 		foamReturnRate?: number;
+		rocks?: { x: number; y: number; radius: number }[];
 		onclick?: () => void;
 	} = $props();
+
 
 	let canvas: HTMLCanvasElement;
 	let fluid: FlipFluid;
@@ -33,15 +40,15 @@
 
 	const dt = 1.0 / 120.0;
 	const flipRatio = 0.95;
-	const numPressureIters = 60;
-	const numParticleIters = 3;
+	const numPressureIters = 28;
+	const numParticleIters = 1;
 	const overRelaxation = 1.7;
 	const compensateDrift = true;
 	const separateParticles = true;
 	const showParticles = false; // set true to overlay raw particles on top
 	const showFluid = true;      // metaball fluid surface
 	const showGrid = false;
-	const damping = 0.95;
+	const damping = 0.995; // Velocity damping factor (0.9 to 1.0, lower is more damping)
 
 	// Particle count controls
 	const relWaterWidth = 0.6; // Water width as fraction of tank (0.1 to 1.0)
@@ -113,7 +120,8 @@
 			fluidColor,
 			foamColor,
 			colorDiffusionCoeff,
-			foamReturnRate
+			foamReturnRate,
+			rocks
 		);
 		renderer = new FluidRenderer(canvas);
 

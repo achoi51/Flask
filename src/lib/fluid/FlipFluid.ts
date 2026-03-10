@@ -9,6 +9,12 @@ function clamp(x: number, min: number, max: number): number {
     return x;
 }
 
+type SolidCircle = {
+    x: number;
+    y: number;
+    radius: number;
+};
+
 export class FlipFluid {
     density: number;
     fNumX: number;
@@ -16,6 +22,8 @@ export class FlipFluid {
     h: number;
     fInvSpacing: number;
     fNumCells: number;
+
+    solidCircles: SolidCircle[];
 
     // Grid arrays
     u: Float32Array;
@@ -120,7 +128,33 @@ export class FlipFluid {
         this.firstCellParticle = new Int32Array(this.pNumCells + 1);
         this.cellParticleIds = new Int32Array(maxParticles);
 
+        this.solidCircles = [];
+
         this.numParticles = 0;
+    }
+
+    addSolidCircle(cx: number, cy: number, radius: number): void {
+        this.solidCircles.push({ x: cx, y: cy, radius });
+
+        const r2 = radius * radius;
+        const n = this.fNumY;
+
+        for (let i = 1; i < this.fNumX - 1; i++) {
+            for (let j = 1; j < this.fNumY - 1; j++) {
+                const x = (i + 0.5) * this.h;
+                const y = (j + 0.5) * this.h;
+                const dx = x - cx;
+                const dy = y - cy;
+
+                if (dx * dx + dy * dy <= r2) {
+                    this.s[i * n + j] = 0.0;
+                }
+            }
+        }
+    }
+
+    clearSolidCircles(): void {
+        this.solidCircles.length = 0;
     }
 
     integrateParticles(dt: number, gravityX: number, gravityY: number, damping: number): void {
@@ -229,7 +263,7 @@ export class FlipFluid {
     }
 
     handleParticleCollisions(): void {
-        const h = 1.0 / this.fInvSpacing;
+        const h = this.h;
         const r = this.particleRadius;
 
         const minX = h + r;
@@ -240,27 +274,59 @@ export class FlipFluid {
         for (let i = 0; i < this.numParticles; i++) {
             let x = this.particlePos[2 * i];
             let y = this.particlePos[2 * i + 1];
+            let vx = this.particleVel[2 * i];
+            let vy = this.particleVel[2 * i + 1];
 
-            // Wall collisions
+            // Tank walls
             if (x < minX) {
                 x = minX;
-                this.particleVel[2 * i] = 0.0;
-            }
-            if (x > maxX) {
+                vx = 0.0;
+            } else if (x > maxX) {
                 x = maxX;
-                this.particleVel[2 * i] = 0.0;
+                vx = 0.0;
             }
+
             if (y < minY) {
                 y = minY;
-                this.particleVel[2 * i + 1] = 0.0;
-            }
-            if (y > maxY) {
+                vy = 0.0;
+            } else if (y > maxY) {
                 y = maxY;
-                this.particleVel[2 * i + 1] = 0.0;
+                vy = 0.0;
+            }
+
+            // Rock collisions
+            for (let k = 0; k < this.solidCircles.length; k++) {
+                const rock = this.solidCircles[k];
+                const dx = x - rock.x;
+                const dy = y - rock.y;
+                const minDist = rock.radius + r;
+                const d2 = dx * dx + dy * dy;
+
+                if (d2 < minDist * minDist) {
+                    const d = Math.sqrt(d2);
+
+                    let nx = 1.0;
+                    let ny = 0.0;
+                    if (d > 1e-8) {
+                        nx = dx / d;
+                        ny = dy / d;
+                    }
+
+                    x = rock.x + nx * minDist;
+                    y = rock.y + ny * minDist;
+
+                    const vn = vx * nx + vy * ny;
+                    if (vn < 0.0) {
+                        vx -= vn * nx;
+                        vy -= vn * ny;
+                    }
+                }
             }
 
             this.particlePos[2 * i] = x;
             this.particlePos[2 * i + 1] = y;
+            this.particleVel[2 * i] = vx;
+            this.particleVel[2 * i + 1] = vy;
         }
     }
 
@@ -407,10 +473,10 @@ export class FlipFluid {
                     for (let j = 0; j < this.fNumY; j++) {
                         const solid = this.cellType[i * n + j] === SOLID_CELL;
                         if (solid || (i > 0 && this.cellType[(i - 1) * n + j] === SOLID_CELL)) {
-                            this.u[i * n + j] = this.prevU[i * n + j];
+                            this.u[i * n + j] = 0.0;
                         }
                         if (solid || (j > 0 && this.cellType[i * n + j - 1] === SOLID_CELL)) {
-                            this.v[i * n + j] = this.prevV[i * n + j];
+                            this.v[i * n + j] = 0.0;
                         }
                     }
                 }

@@ -35,7 +35,8 @@ export function setupFluidScene(
     baseColor?: { r: number; g: number; b: number },
     foamColor?: { r: number; g: number; b: number },
     colorDiffusionCoeff: number = 0.01,
-    foamReturnRate: number = 1.0
+    foamReturnRate: number = 1.0,
+    rocks: { x: number; y: number; radius: number }[] = []
 ): FlipFluid {
     const tankHeight = simHeight;
     const tankWidth = simWidth;
@@ -68,11 +69,9 @@ export function setupFluidScene(
     // Create particles centered on the screen
     fluid.numParticles = numX * numY;
 
-    // Calculate total dimensions of the particle block
     const totalParticleWidth = (numX - 1) * dx;
     const totalParticleHeight = (numY - 1) * dy;
 
-    // Calculate starting position to center the particles
     const startX = (tankWidth - totalParticleWidth) / 2.0;
     const startY = (tankHeight - totalParticleHeight) / 2.0;
 
@@ -84,16 +83,21 @@ export function setupFluidScene(
         }
     }
 
-    // Setup grid cells for the tank boundaries
+    // Tank boundaries
     const n = fluid.fNumY;
     for (let i = 0; i < fluid.fNumX; i++) {
         for (let j = 0; j < fluid.fNumY; j++) {
-            let s = 1.0; // Fluid
+            let s = 1.0;
             if (i === 0 || i === fluid.fNumX - 1 || j === 0) {
-                s = 0.0; // Solid
+                s = 0.0;
             }
             fluid.s[i * n + j] = s;
         }
+    }
+
+    // Add rocks
+    for (const rock of rocks) {
+        fluid.addSolidCircle(rock.x, rock.y, rock.radius);
     }
 
     return fluid;
