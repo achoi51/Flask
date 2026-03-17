@@ -100,5 +100,17 @@ export function setupFluidScene(
         fluid.addSolidCircle(rock.x, rock.y, rock.radius);
     }
 
+    // BELOW 3/17
+
+    // Initialize grid velocities to zero in solid cells
+    for(let i = 0; i < fluid.fNumX * fluid.fNumY; i++) {
+        if (fluid.s[i] === 0.0) {
+            fluid.gridVelX[i] = 0.0;
+            fluid.gridVelY[i] = 0.0;
+        }
+    }
+
+
+
     return fluid;
 }

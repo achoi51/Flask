@@ -360,6 +360,13 @@ export class FlipFluid {
             if (x0 < this.fNumX && y1 < this.fNumY) d[x0 * n + y1] += sx * ty;
         }
 
+        // Normalize density by cell area to get actual density value 3/17
+        const cellArea = h * h;
+        for (let i = 0; i < d.length; i++) {
+            d[i] *= this.density / cellArea;
+        }
+
+
         // Calculate rest density
         if (this.particleRestDensity === 0.0) {
             let sum = 0.0;
