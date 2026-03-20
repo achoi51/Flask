@@ -1,1 +1,4 @@
-ChemicalID,ChemicalName,State,MeltingPoint1,Bronze,Solid,850
+ChemicalID,ChemicalName,State,MeltingPoint
+1,Bronze,Solid,850
+2,asd,asd,9000
+3,dsa,dsa,9
