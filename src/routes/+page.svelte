@@ -17,8 +17,8 @@
 
 	const fluidTypes = [
 		{
-			fluidColor: { r: 0.09, g: 0.4, b: 1.0 },
-			foamColor: { r: 0.09, g: 0.4, b: 1.0 },
+			fluidColor: { r: 0.5, g: 0.5, b: 0.5 },
+			foamColor: { r: 0.5, g: 0.5, b: 0.5 },
 			colorDiffusionCoeff: 0.0008,
 			foamReturnRate: 0.5
 		},
@@ -69,7 +69,7 @@
 	let currentFluidIndex = $state(0);
 
 	let angle: number | undefined = $state(0);
-	let gravity: { x: number; y: number } = $state({ x: 0, y: -MAX_GRAVITY });
+	let gravity: { x: number; y: number } = $state({ x: 0, y: 12.0 });
 	let fluidColor = new Tween(fluidTypes[0].fluidColor, {
 		duration: 500,
 		easing: cubicOut

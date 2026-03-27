@@ -14,7 +14,7 @@ export interface SceneConfig {
 }
 
 export const DEFAULT_SCENE_CONFIG: SceneConfig = {
-    gravity: -9.81,
+    gravity: 0.4,
     dt: 1.0 / 120.0,
     flipRatio: 0.9,
     numPressureIters: 100,
@@ -26,10 +26,10 @@ export const DEFAULT_SCENE_CONFIG: SceneConfig = {
     showGrid: false
 };
 
-export function setupFluidScene(
+export function setupGasScene(
     simWidth: number,
     simHeight: number,
-    resolution = 100,
+    resolution = 70,
     relWaterWidth = 0.6,
     relWaterHeight = 0.8,
     baseColor?: { r: number; g: number; b: number },
@@ -40,7 +40,7 @@ export function setupFluidScene(
     const tankHeight = simHeight;
     const tankWidth = simWidth;
     const h = tankHeight / resolution;
-    const density = 1000.0;
+    const density = 0.3;
 
     // Particle setup
     const r = 0.3 * h;
@@ -65,36 +65,31 @@ export function setupFluidScene(
         foamReturnRate
     );
 
-    // Create particles centered on the screen
-    fluid.numParticles = numX * numY;
+    // Create particles randomly distributed in the tank
+    fluid.numParticles = maxParticles;
 
-    // Calculate total dimensions of the particle block
-    const totalParticleWidth = (numX - 1) * dx;
-    const totalParticleHeight = (numY - 1) * dy;
+// Spawn particles at the bottom for rising gas effect - spread out widely
+	let p = 0;
+	const startY = h + 0.02 * tankHeight; // Very bottom of tank (2%)
+	const endY = h + 0.30 * tankHeight;   // Up to 30% of tank (wider vertical spread)
+	const startX = tankWidth * 0.1;       // 10% from left
+	const endX = tankWidth * 0.9;         // 10% from right (much wider)
+	for (let i = 0; i < maxParticles; i++) {
+		fluid.particlePos[p++] = startX + Math.random() * (endX - startX);
+		fluid.particlePos[p++] = startY + Math.random() * (endY - startY);
+	}
 
-    // Calculate starting position to center the particles
-    const startX = (tankWidth - totalParticleWidth) / 2.0;
-    const startY = (tankHeight - totalParticleHeight) / 2.0;
+	// Setup grid cells for the tank boundaries
+	const n = fluid.fNumY;
+	for (let i = 0; i < fluid.fNumX; i++) {
+		for (let j = 0; j < fluid.fNumY; j++) {
+			let s = 1.0; // Gas
+			if (i === 0 || i === fluid.fNumX - 1) {
+				s = 0.0; // Solid
+			}
+			fluid.s[i * n + j] = s;
+		}
+	}
 
-    let p = 0;
-    for (let i = 0; i < numX; i++) {
-        for (let j = 0; j < numY; j++) {
-            fluid.particlePos[p++] = startX + dx * i + (j % 2 === 0 ? 0.0 : r);
-            fluid.particlePos[p++] = startY + dy * j;
-        }
-    }
-
-    // Setup grid cells for the tank boundaries
-    const n = fluid.fNumY;
-    for (let i = 0; i < fluid.fNumX; i++) {
-        for (let j = 0; j < fluid.fNumY; j++) {
-            let s = 1.0; // Fluid
-            if (i === 0 || i === fluid.fNumX - 1 || j === 0) {
-                s = 0.0; // Solid
-            }
-            fluid.s[i * n + j] = s;
-        }
-    }
-
-    return fluid;
+	return fluid;
 }

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { setupFluidScene, FluidRenderer } from '$lib/fluid';
+	import { setupGasScene, FluidRenderer } from '$lib/fluid';
 	import type { FlipFluid } from '$lib/fluid';
 
 	let {
-		gravity = { x: 0, y: -9.81 },
-		resolution = 70,
+		gravity = { x: 0, y: -3.0 },
+		resolution = 40,
 		fluidColor = { r: 0.09, g: 0.4, b: 1.0 },
 		foamColor = { r: 0.75, g: 0.9, b: 1.0 },
 		colorDiffusionCoeff = 0.0008,
@@ -33,8 +33,8 @@
 
 	const dt = 1.0 / 120.0;
 	const flipRatio = 0.95;
-	const numPressureIters = 60;
-	const numParticleIters = 3;
+	const numPressureIters = 30;
+	const numParticleIters = 2;
 	const overRelaxation = 1.7;
 	const compensateDrift = true;
 	const separateParticles = true;
@@ -44,8 +44,8 @@
 	const damping = 0.95;
 
 	// Particle count controls
-	const relWaterWidth = 0.6; // Water width as fraction of tank (0.1 to 1.0)
-	const relWaterHeight = 0.8; // Water height as fraction of tank (0.1 to 1.0)
+	const relWaterWidth = 0.4; // Water width as fraction of tank (0.1 to 1.0)
+	const relWaterHeight = 0.3; // Water height as fraction of tank (0.1 to 1.0)
 
 	function resizeCanvas() {
 		if (!canvas) return;
@@ -103,8 +103,8 @@
 	onMount(() => {
 		resizeCanvas();
 
-		// Initialize fluid simulation
-		fluid = setupFluidScene(
+		// Initialize gas simulation
+		fluid = setupGasScene(
 			simWidth,
 			simHeight,
 			resolution,
