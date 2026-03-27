@@ -17,52 +17,95 @@
 
 	const fluidTypes = [
 		{
+			// deep ocean
 			fluidColor: { r: 0.09, g: 0.4, b: 1.0 },
 			foamColor: { r: 0.09, g: 0.4, b: 1.0 },
 			colorDiffusionCoeff: 0.0008,
 			foamReturnRate: 0.5
 		},
 		{
+			// tropical lagoon
 			fluidColor: { r: 0.0, g: 0.7, b: 0.8 },
 			foamColor: { r: 0.0, g: 0.7, b: 0.8 },
 			colorDiffusionCoeff: 0.0012,
 			foamReturnRate: 0.6
 		},
 		{
+			// molten orange
 			fluidColor: { r: 1.0, g: 0.4, b: 0.1 },
 			foamColor: { r: 1.0, g: 0.4, b: 0.1 },
 			colorDiffusionCoeff: 0.0004,
 			foamReturnRate: 0.3
 		},
 		{
+			// neon purple
 			fluidColor: { r: 0.5, g: 0.2, b: 0.9 },
 			foamColor: { r: 0.5, g: 0.2, b: 0.9 },
 			colorDiffusionCoeff: 0.001,
 			foamReturnRate: 0.7
 		},
 		{
+			// forest green
 			fluidColor: { r: 0.1, g: 0.6, b: 0.4 },
 			foamColor: { r: 0.1, g: 0.6, b: 0.4 },
 			colorDiffusionCoeff: 0.0015,
 			foamReturnRate: 0.4
 		},
 		{
+			// pink sherbet
 			fluidColor: { r: 0.9, g: 0.5, b: 0.6 },
 			foamColor: { r: 0.9, g: 0.5, b: 0.6 },
 			colorDiffusionCoeff: 0.0006,
 			foamReturnRate: 0.8
 		},
 		{
+			// sky blue
 			fluidColor: { r: 0.3, g: 0.7, b: 0.9 },
 			foamColor: { r: 0.3, g: 0.7, b: 0.9 },
 			colorDiffusionCoeff: 0.0009,
 			foamReturnRate: 0.5
 		},
 		{
+			// golden syrup
 			fluidColor: { r: 0.9, g: 0.7, b: 0.2 },
 			foamColor: { r: 0.9, g: 0.7, b: 0.2 },
 			colorDiffusionCoeff: 0.0005,
 			foamReturnRate: 0.2
+		},
+		{
+			// glacier melt
+			fluidColor: { r: 0.8, g: 0.95, b: 1.0 },
+			foamColor: { r: 0.95, g: 1.0, b: 1.0 },
+			colorDiffusionCoeff: 0.0014,
+			foamReturnRate: 0.85
+		},
+		{
+			// cherry soda
+			fluidColor: { r: 0.85, g: 0.1, b: 0.2 },
+			foamColor: { r: 1.0, g: 0.55, b: 0.65 },
+			colorDiffusionCoeff: 0.0007,
+			foamReturnRate: 0.55
+		},
+		{
+			// toxic slime
+			fluidColor: { r: 0.4, g: 0.95, b: 0.15 },
+			foamColor: { r: 0.75, g: 1.0, b: 0.5 },
+			colorDiffusionCoeff: 0.0018,
+			foamReturnRate: 0.75
+		},
+		{
+			// dark coffee
+			fluidColor: { r: 0.32, g: 0.18, b: 0.08 },
+			foamColor: { r: 0.62, g: 0.45, b: 0.3 },
+			colorDiffusionCoeff: 0.00045,
+			foamReturnRate: 0.25
+		},
+		{
+			// liquid silver
+			fluidColor: { r: 0.75, g: 0.78, b: 0.84 },
+			foamColor: { r: 0.92, g: 0.94, b: 0.98 },
+			colorDiffusionCoeff: 0.00035,
+			foamReturnRate: 0.65
 		}
 	];
 
@@ -129,14 +172,14 @@
 
 	onMount(() => {
 		window.addEventListener('click', onTap);
-	})
+	});
 
 	const startListening = () => {
 		if (!browser) return;
 		window.addEventListener('deviceorientation', onOrientationChange);
 		window.addEventListener('devicemotion', onDeviceMotion);
 	};
-	
+
 	//let element = document.createElement('h1');
 	const onDeviceMotion = (event: DeviceMotionEvent) => {
 		if (!event.accelerationIncludingGravity) return;
@@ -145,8 +188,6 @@
 		const x = acceleration.x || 0;
 		const y = acceleration.y || 0;
 		const z = acceleration.z || 0;
-
-
 
 		// Calculate the magnitude of acceleration change
 		const deltaX = Math.abs(x - lastAcceleration.x);
@@ -161,7 +202,6 @@
 			onShake(x, y);
 			lastShakeTime = currentTime;
 
-		
 			//element.textContent = `X: ${x}, Y: ${y}, Z: ${z}`;
 			//document.body.appendChild(element);
 		}
@@ -184,7 +224,7 @@
 
 			const gx = sinGamma * cosBeta;
 			const gy = -sinBeta;
-			
+
 			gravity.x = MAX_GRAVITY * Math.max(-1, Math.min(1, gx));
 			gravity.y = MAX_GRAVITY * Math.max(-1, Math.min(1, gy));
 		}
@@ -215,7 +255,7 @@
 		}
 	});
 
-	const onShake = (x:number, y:number) => {
+	const onShake = (x: number, y: number) => {
 		currentFluidIndex = (currentFluidIndex + 1) % fluidTypes.length;
 		const newFluid = fluidTypes[currentFluidIndex];
 
@@ -227,19 +267,18 @@
 		colorDiffusionCoeff = newFluid.colorDiffusionCoeff;
 		foamReturnRate = newFluid.foamReturnRate;
 
-		const spikeIntensity = 50
+		const spikeIntensity = 50;
 		gravity.x = -x * spikeIntensity;
 		gravity.y = y * spikeIntensity;
 	};
 
 	const onTap = () => {
-        currentFluidIndex = (currentFluidIndex + 1) % fluidTypes.length;
+		currentFluidIndex = (currentFluidIndex + 1) % fluidTypes.length;
 		const newFluid = fluidTypes[currentFluidIndex];
 
-		 //Tween only the colors
-		 fluidColor.target = newFluid.fluidColor;
-		 foamColor.target = newFluid.foamColor;
-
+		//Tween only the colors
+		fluidColor.target = newFluid.fluidColor;
+		foamColor.target = newFluid.foamColor;
 	};
 </script>
 
@@ -297,8 +336,4 @@
 			<PopupInfo />
 		{/if}
 	{/if}
-
-	
 </div>
-
-
