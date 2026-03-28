@@ -54,6 +54,10 @@ export class FlipFluid {
     firstCellParticle: Int32Array;
     cellParticleIds: Int32Array;
 
+    // Particle spawn
+    spawnWidth: number;
+    spawnHeight: number;
+
     constructor(
         density: number,
         width: number,
@@ -121,6 +125,9 @@ export class FlipFluid {
         this.cellParticleIds = new Int32Array(maxParticles);
 
         this.numParticles = 0;
+
+        this.spawnWidth = 0.1;
+        this.spawnHeight = 0.1;
     }
 
     integrateParticles(dt: number, gravityX: number, gravityY: number, damping: number): void {
@@ -567,6 +574,17 @@ export class FlipFluid {
 
         this.updateParticleColors(sdt);
         this.updateCellColors();
+    }
+
+    addNewParticles(newParticles: number, xPosition: number, yPosition: number) {
+        if (this.numParticles + newParticles > this.maxParticles) {
+            newParticles = this.maxParticles - this.numParticles;
+        }
+        for (let i = this.numParticles; i < this.numParticles + newParticles; i++) {
+            this.particlePos[2 * i] = xPosition + Math.random() * this.spawnWidth - this.spawnWidth / 2;
+            this.particlePos[2 * i + 1] = yPosition + Math.random() * this.spawnHeight - this.spawnHeight / 2;
+        }
+        this.numParticles += newParticles;
     }
 
     setFluidColor(baseColor: { r: number; g: number; b: number }): void {

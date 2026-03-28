@@ -130,6 +130,7 @@
 			resizeCanvas();
 		};
 		window.addEventListener('resize', handleResize);
+		window.addEventListener('click',spawnParticle )
 
 		// Start animation loop
 		update();
@@ -141,6 +142,14 @@
 			}
 		};
 	});
+
+	const spawnParticle = (event: any) => {
+		let x: number;
+		let y: number;
+		x = (event.clientX / window.innerWidth) * simWidth; //Transforms window position to simulation position
+		y = simHeight - ((event.clientY / window.innerHeight) * simHeight);
+		fluid.addNewParticles(10, x, y);
+	};
 
 	// Watch for color changes and update fluid (supports live changes later)
 	$effect(() => {
