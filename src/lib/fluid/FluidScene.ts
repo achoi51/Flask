@@ -49,7 +49,7 @@ export function setupGasScene(
 
     const numX = Math.floor((relWaterWidth * tankWidth - 2.0 * h - 2.0 * r) / dx);
     const numY = Math.floor((relWaterHeight * tankHeight - 2.0 * h - 2.0 * r) / dy);
-    const maxParticles = numX * numY;
+    const maxParticles = numX * numY * 2;
 
     // Create fluid
     const fluid = new FlipFluid(

@@ -31,6 +31,13 @@
 	let simHeight = 3.0;
 	let simWidth = 4.0;
 
+	let isHold = false; // Know if click is held
+	let currentTime;
+	let lastTime = 0;
+	let mouse = $state({ x: 0, y: 0 });
+	const numberOfParticles = 5;
+	const seperation = 10;
+
 	const dt = 1.0 / 120.0;
 	const flipRatio = 0.95;
 	const numPressureIters = 30;
@@ -97,6 +104,11 @@
 	function update() {
 		simulate();
 		render();
+		currentTime = performance.now();
+		if (isHold && currentTime - lastTime > seperation) {
+			spawnParticle();
+			lastTime = currentTime;
+		}
 		animationId = requestAnimationFrame(update);
 	}
 
@@ -130,7 +142,6 @@
 			resizeCanvas();
 		};
 		window.addEventListener('resize', handleResize);
-		window.addEventListener('click',spawnParticle )
 
 		// Start animation loop
 		update();
@@ -143,13 +154,18 @@
 		};
 	});
 
-	const spawnParticle = (event: any) => {
+	const spawnParticle = () => {
 		let x: number;
 		let y: number;
-		x = (event.clientX / window.innerWidth) * simWidth; //Transforms window position to simulation position
-		y = simHeight - ((event.clientY / window.innerHeight) * simHeight);
-		fluid.addNewParticles(10, x, y);
+		x = (mouse.x / window.innerWidth) * simWidth; //Transforms window position to simulation position
+		y = simHeight - ((mouse.y / window.innerHeight) * simHeight);
+		fluid.addNewParticles(numberOfParticles, x, y);
 	};
+	
+	function handleMousemove(event: any) {
+    mouse.x = event.clientX;
+    mouse.y = event.clientY;
+  	}
 
 	// Watch for color changes and update fluid (supports live changes later)
 	$effect(() => {
@@ -179,5 +195,12 @@
 		}
 	});
 </script>
+
+<svelte:window 
+  onmousedown={() => isHold = true} 
+  onmouseup={() => isHold = false} 
+  onmousemove={handleMousemove}
+/>
+
 
 <canvas bind:this={canvas} class="absolute inset-0 z-10 h-full w-full"></canvas>
