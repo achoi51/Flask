@@ -148,13 +148,15 @@
 		let y: number;
 		x = (event.clientX / window.innerWidth) * simWidth; //Transforms window position to simulation position
 		y = simHeight - ((event.clientY / window.innerHeight) * simHeight);
-		fluid.addNewParticles(10, x, y);
+		fluid.addNewParticles(2, x, y, 'air'); // Spawns 10 air particles at the click location
+		fluid.addNewParticles(2, x, y, 'co2');
+		fluid.addNewParticles(2, x, y, 'helium');
 	};
 
 	// Watch for color changes and update fluid (supports live changes later)
 	$effect(() => {
 		if (fluid) {
-			fluid.setFluidColor(fluidColor);
+			//fluid.setFluidColor(fluidColor);
 		}
 	});
 

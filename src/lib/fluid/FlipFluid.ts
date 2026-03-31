@@ -58,6 +58,14 @@ export class FlipFluid {
     spawnWidth: number;
     spawnHeight: number;
 
+    // Add to class properties
+    molarMass: Float32Array; // Per-particle molar mass (kg/mol)
+    temperature: Float32Array; // Per-particle temperature (K)
+    gasConstant: number = 8.314; // J/mol·K
+    isCompressible: boolean = true; // Enable for gases
+    particleMass: Float32Array;          // add
+    refMolarMass: number = 0.029;        // air baseline (kg/mol)
+
     constructor(
         density: number,
         width: number,
@@ -128,19 +136,23 @@ export class FlipFluid {
 
         this.spawnWidth = 0.1;
         this.spawnHeight = 0.1;
+
+        // Initialize per-particle properties
+        this.molarMass = new Float32Array(this.maxParticles).fill(0.029); // Default air
+        this.temperature = new Float32Array(this.maxParticles).fill(293.15); // 20°C
+        this.particleMass = new Float32Array(this.maxParticles).fill(1.0);
     }
 
     integrateParticles(dt: number, gravityX: number, gravityY: number, damping: number): void {
         for (let i = 0; i < this.numParticles; i++) {
-            // Apply gravity
-            this.particleVel[2 * i] += dt * gravityX;     // Apply X component of gravity
-            this.particleVel[2 * i + 1] += dt * gravityY; // Apply Y component of gravity
+            const massFactor = this.particleMass[i]; // <1 light gas, >1 heavy gas
+            this.particleVel[2 * i] += dt * gravityX * massFactor;
+            this.particleVel[2 * i + 1] += dt * gravityY * massFactor;
 
-            // Apply damping to reduce velocity over time
+            // stability damping (not viscosity)
             this.particleVel[2 * i] *= damping;
             this.particleVel[2 * i + 1] *= damping;
 
-            // Update positions
             this.particlePos[2 * i] += this.particleVel[2 * i] * dt;
             this.particlePos[2 * i + 1] += this.particleVel[2 * i + 1] * dt;
         }
@@ -281,27 +293,23 @@ export class FlipFluid {
         d.fill(0.0);
 
         for (let i = 0; i < this.numParticles; i++) {
+            const xm = this.particleMass[i];
             const x = clamp(this.particlePos[2 * i], h, (this.fNumX - 1) * h);
             const y = clamp(this.particlePos[2 * i + 1], h, (this.fNumY - 1) * h);
-
             const x0 = Math.floor((x - h2) * h1);
             const tx = ((x - h2) - x0 * h) * h1;
             const x1 = Math.min(x0 + 1, this.fNumX - 2);
-
             const y0 = Math.floor((y - h2) * h1);
             const ty = ((y - h2) - y0 * h) * h1;
             const y1 = Math.min(y0 + 1, this.fNumY - 2);
-
             const sx = 1.0 - tx;
             const sy = 1.0 - ty;
-
-            if (x0 < this.fNumX && y0 < this.fNumY) d[x0 * n + y0] += sx * sy;
-            if (x1 < this.fNumX && y0 < this.fNumY) d[x1 * n + y0] += tx * sy;
-            if (x1 < this.fNumX && y1 < this.fNumY) d[x1 * n + y1] += tx * ty;
-            if (x0 < this.fNumX && y1 < this.fNumY) d[x0 * n + y1] += sx * ty;
+            if (x0 < this.fNumX && y0 < this.fNumY) d[x0 * n + y0] += xm * sx * sy;
+            if (x1 < this.fNumX && y0 < this.fNumY) d[x1 * n + y0] += xm * tx * sy;
+            if (x1 < this.fNumX && y1 < this.fNumY) d[x1 * n + y1] += xm * tx * ty;
+            if (x0 < this.fNumX && y1 < this.fNumY) d[x0 * n + y1] += xm * sx * ty;
         }
 
-        // Calculate rest density
         if (this.particleRestDensity === 0.0) {
             let sum = 0.0;
             let numFluidCells = 0;
@@ -311,9 +319,7 @@ export class FlipFluid {
                     numFluidCells++;
                 }
             }
-            if (numFluidCells > 0) {
-                this.particleRestDensity = sum / numFluidCells;
-            }
+            if (numFluidCells > 0) this.particleRestDensity = sum / numFluidCells;
         }
     }
 
@@ -454,10 +460,26 @@ export class FlipFluid {
 
                     let div = this.u[right] - this.u[center] + this.v[top] - this.v[center];
 
-                    if (this.particleRestDensity > 0.0 && compensateDrift) {
-                        const k = 1.0;
-                        const compression = this.particleDensity[i * n + j] - this.particleRestDensity;
-                        if (compression > 0.0) div = div - k * compression;
+                    if (this.isCompressible) {
+                        // Use average molar mass and temperature for the cell (simplified)
+                        let avgM = 0, avgT = 0, count = 0;
+                        // Note: In a full implementation, average over particles in cell
+                        // For simplicity, use global or per-cell if added
+                        avgM = this.molarMass[0]; // Placeholder; compute average
+                        avgT = this.temperature[0];
+
+                        const rho = this.particleDensity[center];
+                        const P = rho * this.gasConstant * avgT / avgM;
+                        const targetRho = P * avgM / (this.gasConstant * avgT);
+                        const compressibilityFactor = 0.5; // Adjust for gas expansion
+                        div += compressibilityFactor * (rho - targetRho);
+                    } else {
+                        // Original incompressible logic
+                        if (this.particleRestDensity > 0.0 && compensateDrift) {
+                            const k = 1.0;
+                            const compression = this.particleDensity[i * n + j] - this.particleRestDensity;
+                            if (compression > 0.0) div -= k * compression;
+                        }
                     }
 
                     let p = -div / s;
@@ -576,7 +598,7 @@ export class FlipFluid {
         this.updateCellColors();
     }
 
-    addNewParticles(newParticles: number, xPosition: number, yPosition: number) {
+    addNewParticles(newParticles: number, xPosition: number, yPosition: number, gasType: 'air' | 'helium' | 'co2' = 'air') {
         if (this.numParticles + newParticles > this.maxParticles) {
             newParticles = this.maxParticles - this.numParticles;
         }
@@ -584,6 +606,7 @@ export class FlipFluid {
             this.particlePos[2 * i] = xPosition + Math.random() * this.spawnWidth - this.spawnWidth / 2;
             this.particlePos[2 * i + 1] = yPosition + Math.random() * this.spawnHeight - this.spawnHeight / 2;
         }
+        this.setGasType(this.numParticles, newParticles, gasType);
         this.numParticles += newParticles;
     }
 
@@ -606,5 +629,23 @@ export class FlipFluid {
 
     setFoamReturnRate(rate: number): void {
         this.foamReturnRate = Math.max(0, rate);
+    }
+
+    setGasType(startIndex: number, count: number, type: 'air' | 'helium' | 'co2'): void {
+        for (let i = startIndex; i < startIndex + count && i < this.maxParticles; i++) {
+            switch (type) {
+                case 'air':
+                    this.molarMass[i] = 0.029;
+                    break;
+                case 'helium':
+                    this.molarMass[i] = 0.004;
+                    break;
+                case 'co2':
+                    this.molarMass[i] = 0.044;
+                    break;
+            }
+            this.particleMass[i] = this.molarMass[i] / this.refMolarMass;
+            // color assignments left as-is
+        }
     }
 }
