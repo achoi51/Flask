@@ -11,7 +11,7 @@
 	import GitHubLink from '$lib/GitHubLink.svelte';
 	import PopupInfo from '$lib/PopupInfo.svelte';
 
-	const MAX_GRAVITY = 100.81;
+	const MAX_GRAVITY = 20.0;
 
 	type AppState = 'loading' | 'needs-permission' | 'ready' | 'denied' | 'not-supported';
 
@@ -69,7 +69,7 @@
 	let currentFluidIndex = $state(0);
 
 	let angle: number | undefined = $state(0);
-	let gravity: { x: number; y: number } = $state({ x: 0, y: 12.0 });
+	let gravity: { x: number; y: number } = $state({ x: 0, y: MAX_GRAVITY });
 	let fluidColor = new Tween(fluidTypes[0].fluidColor, {
 		duration: 500,
 		easing: cubicOut
@@ -185,8 +185,8 @@
 			const gx = sinGamma * cosBeta;
 			const gy = -sinBeta;
 			
-			gravity.x = MAX_GRAVITY * Math.max(-1, Math.min(1, gx));
-			gravity.y = MAX_GRAVITY * Math.max(-1, Math.min(1, gy));
+			gravity.x = -MAX_GRAVITY * Math.max(-1, Math.min(1, gx));
+			gravity.y = -MAX_GRAVITY * Math.max(-1, Math.min(1, gy));
 		}
 	};
 
@@ -300,5 +300,3 @@
 
 	
 </div>
-
-

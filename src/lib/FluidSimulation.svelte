@@ -31,12 +31,14 @@
 	let simHeight = 3.0;
 	let simWidth = 4.0;
 
+	//Particle spawning variables
 	let isHold = false; // Know if click is held
 	let currentTime;
 	let lastTime = 0;
 	let mouse = $state({ x: 0, y: 0 });
+	const yOffset = 0.25;
 	const numberOfParticles = 5;
-	const seperation = 10;
+	const seperation = 10; // The range where particles can spawn around the mouse
 
 	const dt = 1.0 / 120.0;
 	const flipRatio = 0.95;
@@ -158,13 +160,13 @@
 		let x: number;
 		let y: number;
 		x = (mouse.x / window.innerWidth) * simWidth; //Transforms window position to simulation position
-		y = simHeight - ((mouse.y / window.innerHeight) * simHeight);
+		y = simHeight - ((mouse.y / window.innerHeight) * simHeight) + yOffset;
 		fluid.addNewParticles(numberOfParticles, x, y);
 	};
 	
 	function handleMousemove(event: any) {
-    mouse.x = event.clientX;
-    mouse.y = event.clientY;
+		mouse.x = event.clientX;
+		mouse.y = event.clientY;
   	}
 
 	// Watch for color changes and update fluid (supports live changes later)
@@ -197,9 +199,12 @@
 </script>
 
 <svelte:window 
-  onmousedown={() => isHold = true} 
-  onmouseup={() => isHold = false} 
-  onmousemove={handleMousemove}
+  onpointerdown={() => isHold = true} 
+  onpointerup={() => isHold = false} 
+  onpointermove={handleMousemove}
+  on:touchstart={(e) => { e.preventDefault(); isHold = true; mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; }}
+  on:touchend={() => isHold = false}
+  on:touchmove={(e) => { e.preventDefault(); mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; }}
 />
 
 
