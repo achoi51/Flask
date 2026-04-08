@@ -208,4 +208,4 @@
 />
 
 
-<canvas bind:this={canvas} class="absolute inset-0 z-10 h-full w-full"></canvas>
+<canvas bind:this={canvas} class="absolute inset-0 z-10 h-full w-full touch-none"></canvas>
