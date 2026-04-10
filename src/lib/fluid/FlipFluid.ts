@@ -577,13 +577,25 @@ export class FlipFluid {
     }
 
     addNewParticles(newParticles: number, xPosition: number, yPosition: number) {
+        if (newParticles <= 0) return;
+
         if (this.numParticles + newParticles > this.maxParticles) {
             newParticles = this.maxParticles - this.numParticles;
+            if (newParticles <= 0) return;
         }
+
         for (let i = this.numParticles; i < this.numParticles + newParticles; i++) {
             this.particlePos[2 * i] = xPosition + Math.random() * this.spawnWidth - this.spawnWidth / 2;
             this.particlePos[2 * i + 1] = yPosition + Math.random() * this.spawnHeight - this.spawnHeight / 2;
+
+            this.particleVel[2 * i] = 0.0;
+            this.particleVel[2 * i + 1] = 0.0;
+
+            this.particleColor[3 * i] = this.baseColor.r;
+            this.particleColor[3 * i + 1] = this.baseColor.g;
+            this.particleColor[3 * i + 2] = this.baseColor.b;
         }
+
         this.numParticles += newParticles;
     }
 
