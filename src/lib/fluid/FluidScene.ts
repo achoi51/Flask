@@ -32,8 +32,8 @@ export function setupGasScene(
     resolution = 70,
     relWaterWidth = 0.6,
     relWaterHeight = 0.8,
-    baseColor?: { r: number; g: number; b: number },
-    foamColor?: { r: number; g: number; b: number },
+    baseColor?: { r: number; g: number; b: number, a: number },
+    foamColor?: { r: number; g: number; b: number, a: number },
     colorDiffusionCoeff: number = 0.01,
     foamReturnRate: number = 1.0
 ): FlipFluid {

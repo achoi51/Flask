@@ -7,8 +7,8 @@
 	let {
 		gravity = { x: 0, y: -3.0 },
 		resolution = 40,
-		fluidColor = { r: 0.09, g: 0.4, b: 1.0 },
-		foamColor = { r: 0.75, g: 0.9, b: 1.0 },
+		fluidColor = { r: 0.09, g: 0.4, b: 1.0, a: 0.5 },
+		foamColor = { r: 0.75, g: 0.9, b: 1.0, a: 0.5 },
 		colorDiffusionCoeff = 0.0008,
 		foamReturnRate = 0.5,
 		onclick
@@ -16,8 +16,8 @@
 		gravity?: { x: number; y: number };
 		resolution?: number;
 		angle?: number;
-		fluidColor?: { r: number; g: number; b: number };
-		foamColor?: { r: number; g: number; b: number };
+		fluidColor?: { r: number; g: number; b: number, a: number };
+		foamColor?: { r: number; g: number; b: number, a: number };
 		colorDiffusionCoeff?: number;
 		foamReturnRate?: number;
 		onclick?: () => void;
