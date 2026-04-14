@@ -10,6 +10,7 @@
 	import FluidSimulation from '$lib/FluidSimulation.svelte';
 	import GitHubLink from '$lib/GitHubLink.svelte';
 	import PopupInfo from '$lib/PopupInfo.svelte';
+	import { stopPropagation } from 'svelte/legacy';
 
 	const MAX_GRAVITY = 20.0;
 
@@ -251,6 +252,7 @@
 >
 	<!-- Add color change button in top left -->
 	<button
+		onpointerdown={(e) => e.stopPropagation()}
 		onclick={onTap}
 		class="absolute top-4 left-4 z-20 rounded-lg bg-blue-500 px-4 py-2 font-semibold text-white shadow-lg transition-colors hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900 focus:outline-none"
 	>
