@@ -3,16 +3,19 @@ import type { FlipFluid } from './FlipFluid';
 const pointVertexShader = `
     attribute vec2 attrPosition;
     attribute vec3 attrColor;
+    attribute float attrAlpha;
     uniform vec2 domainSize;
     uniform float pointSize;
     uniform float drawDisk;
     varying vec3 fragColor;
+    varying float fragAlpha;
     varying float fragDrawDisk;
     void main() {
         vec4 screenTransform = vec4(2.0 / domainSize.x, 2.0 / domainSize.y, -1.0, -1.0);
         gl_Position = vec4(attrPosition * screenTransform.xy + screenTransform.zw, 0.0, 1.0);
         gl_PointSize = pointSize;
         fragColor = attrColor;
+        fragAlpha = attrAlpha;
         fragDrawDisk = drawDisk;
     }
 `;
@@ -20,15 +23,16 @@ const pointVertexShader = `
 const pointFragmentShader = `
     precision mediump float;
     varying vec3 fragColor;
+    varying float fragAlpha;
     varying float fragDrawDisk;
     void main() {
         if (fragDrawDisk == 1.0) {
             float r2 = dot(gl_PointCoord - 0.5, gl_PointCoord - 0.5);
             if (r2 > 0.25) discard;
-            float alpha = 1.0 - smoothstep(0.15, 0.25, r2);
+            float alpha = (1.0 - smoothstep(0.15, 0.25, r2)) * fragAlpha;
             gl_FragColor = vec4(fragColor, alpha);
         } else {
-            gl_FragColor = vec4(fragColor, 1.0);
+            gl_FragColor = vec4(fragColor, fragAlpha);
         }
     }
 `;
@@ -59,27 +63,31 @@ const meshFragmentShader = `
 const accumVertexShader = `
     attribute vec2 attrPosition;
     attribute vec3 attrColor;
+    attribute float attrAlpha;
     uniform vec2 domainSize;
     uniform float radiusPx;
     varying vec3 vColor;
+    varying float vAlpha;
     void main() {
         vec4 st = vec4(2.0 / domainSize.x, 2.0 / domainSize.y, -1.0, -1.0);
         gl_Position = vec4(attrPosition * st.xy + st.zw, 0.0, 1.0);
         gl_PointSize = radiusPx * 2.0;
         vColor = attrColor;
+        vAlpha = attrAlpha;
     }
 `;
 
 const accumFragmentShader = `
     precision mediump float;
     varying vec3 vColor;
+    varying float vAlpha;
     uniform float accumScale;
     void main() {
         vec2 coord = gl_PointCoord - 0.5;
         float dist = length(coord) * 2.0;
         if (dist > 1.0) discard;
         float influence = 1.0 - dist;
-        float weight = influence * influence * accumScale;
+        float weight = influence * influence * accumScale * vAlpha;
         gl_FragColor = vec4(vColor * weight, weight);
     }
 `;
@@ -253,20 +261,24 @@ export class FluidRenderer {
 
         const posLoc = gl.getAttribLocation(this.accumShader, 'attrPosition');
         const colorLoc = gl.getAttribLocation(this.accumShader, 'attrColor');
+        const alphaLoc = gl.getAttribLocation(this.accumShader, 'attrAlpha');
         gl.enableVertexAttribArray(posLoc);
         gl.enableVertexAttribArray(colorLoc);
+        gl.enableVertexAttribArray(alphaLoc);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.pointVertexBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, fluid.particlePos.subarray(0, 2 * fluid.numParticles), gl.DYNAMIC_DRAW);
         gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.pointColorBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, fluid.particleColor.subarray(0, 3 * fluid.numParticles), gl.DYNAMIC_DRAW);
-        gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
+        gl.bufferData(gl.ARRAY_BUFFER, fluid.particleColor.subarray(0, 4 * fluid.numParticles), gl.DYNAMIC_DRAW);
+        gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 16, 0);
+        gl.vertexAttribPointer(alphaLoc, 1, gl.FLOAT, false, 16, 12);
 
         gl.drawArrays(gl.POINTS, 0, fluid.numParticles);
         gl.disableVertexAttribArray(posLoc);
         gl.disableVertexAttribArray(colorLoc);
+        gl.disableVertexAttribArray(alphaLoc);
 
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.viewport(0, 0, w, h);
@@ -299,6 +311,8 @@ export class FluidRenderer {
         gl.enableVertexAttribArray(posLoc);
         const colorLoc = gl.getAttribLocation(this.pointShader, 'attrColor');
         gl.enableVertexAttribArray(colorLoc);
+        const alphaLoc = gl.getAttribLocation(this.pointShader, 'attrAlpha');
+        gl.enableVertexAttribArray(alphaLoc);
 
         if (config.showGrid) {
             const pointSize = 0.9 * fluid.h / config.simWidth * gl.canvas.width;
@@ -339,14 +353,16 @@ export class FluidRenderer {
             gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.pointColorBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, fluid.particleColor.subarray(0, 3 * fluid.numParticles), gl.DYNAMIC_DRAW);
-            gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
+            gl.bufferData(gl.ARRAY_BUFFER, fluid.particleColor.subarray(0, 4 * fluid.numParticles), gl.DYNAMIC_DRAW);
+            gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 16, 0);
+            gl.vertexAttribPointer(alphaLoc, 1, gl.FLOAT, false, 16, 12);
 
             gl.drawArrays(gl.POINTS, 0, fluid.numParticles);
         }
 
         gl.disableVertexAttribArray(posLoc);
         gl.disableVertexAttribArray(colorLoc);
+        gl.disableVertexAttribArray(alphaLoc);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
 

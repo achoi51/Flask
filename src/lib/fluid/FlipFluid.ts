@@ -39,8 +39,8 @@ export class FlipFluid {
     numParticles: number;
 
     // Colors
-    baseColor: { r: number; g: number; b: number };
-    foamColor: { r: number; g: number; b: number };
+    baseColor: { r: number; g: number; b: number, a: number };
+    foamColor: { r: number; g: number; b: number, a: number };
     colorDiffusionCoeff: number;
     foamReturnRate: number; // per-second rate towards base color
 
@@ -65,8 +65,8 @@ export class FlipFluid {
         spacing: number,
         particleRadius: number,
         maxParticles: number,
-        baseColor?: { r: number; g: number; b: number },
-        foamColor?: { r: number; g: number; b: number },
+        baseColor?: { r: number; g: number; b: number, a: number },
+        foamColor?: { r: number; g: number; b: number, a: number },
         colorDiffusionCoeff: number = 0.01,
         foamReturnRate: number = 1.0
     ) {
@@ -92,21 +92,22 @@ export class FlipFluid {
         // Initialize particle arrays
         this.maxParticles = maxParticles;
         this.particlePos = new Float32Array(2 * this.maxParticles);
-        this.particleColor = new Float32Array(3 * this.maxParticles);
+        this.particleColor = new Float32Array(4 * this.maxParticles);
 
         // Use provided base color or default to a deeper water-like blue
-        const defaultColor = { r: 0.06, g: 0.45, b: 0.9 };
+        const defaultColor = { r: 0.06, g: 0.45, b: 0.9, a: 0.5 };
         const color = baseColor || defaultColor;
         this.baseColor = { ...color };
-        this.foamColor = foamColor || { r: 0.7, g: 0.9, b: 1.0 };
+        this.foamColor = foamColor || { r: 0.7, g: 0.9, b: 1.0, a: 0.5 };
         this.colorDiffusionCoeff = colorDiffusionCoeff;
         this.foamReturnRate = foamReturnRate;
 
         for (let i = 0; i < this.maxParticles; i++) {
             // Single base color for all particles
-            this.particleColor[3 * i] = color.r;
-            this.particleColor[3 * i + 1] = color.g;
-            this.particleColor[3 * i + 2] = color.b;
+            this.particleColor[4 * i] = color.r;
+            this.particleColor[4 * i + 1] = color.g;
+            this.particleColor[4 * i + 2] = color.b;
+            this.particleColor[4 * i + 3] = color.a;
         }
 
         this.particleVel = new Float32Array(2 * this.maxParticles);
@@ -222,11 +223,11 @@ export class FlipFluid {
 
                             // Color mixing
                             for (let k = 0; k < 3; k++) {
-                                const color0 = this.particleColor[3 * i + k];
-                                const color1 = this.particleColor[3 * id + k];
+                                const color0 = this.particleColor[4 * i + k];
+                                const color1 = this.particleColor[4 * id + k];
                                 const color = (color0 + color1) * 0.5;
-                                this.particleColor[3 * i + k] = color0 + (color - color0) * colorDiffusionCoeff;
-                                this.particleColor[3 * id + k] = color1 + (color - color1) * colorDiffusionCoeff;
+                                this.particleColor[4 * i + k] = color0 + (color - color0) * colorDiffusionCoeff;
+                                this.particleColor[4 * id + k] = color1 + (color - color1) * colorDiffusionCoeff;
                             }
                         }
                     }
@@ -494,17 +495,20 @@ export class FlipFluid {
 
             if (applyFoam) {
                 // Set to foam color immediately while in foam region
-                this.particleColor[3 * i] = this.foamColor.r;
-                this.particleColor[3 * i + 1] = this.foamColor.g;
-                this.particleColor[3 * i + 2] = this.foamColor.b;
+                this.particleColor[4 * i] = this.foamColor.r;
+                this.particleColor[4 * i + 1] = this.foamColor.g;
+                this.particleColor[4 * i + 2] = this.foamColor.b;
+                this.particleColor[4 * i + 3] = this.foamColor.a;
             } else {
                 // Lerp back to base color at a controllable rate
-                const cr = this.particleColor[3 * i];
-                const cg = this.particleColor[3 * i + 1];
-                const cb = this.particleColor[3 * i + 2];
-                this.particleColor[3 * i] = cr + (this.baseColor.r - cr) * t;
-                this.particleColor[3 * i + 1] = cg + (this.baseColor.g - cg) * t;
-                this.particleColor[3 * i + 2] = cb + (this.baseColor.b - cb) * t;
+                const cr = this.particleColor[4 * i];
+                const cg = this.particleColor[4 * i + 1];
+                const cb = this.particleColor[4 * i + 2];
+                const ca = this.particleColor[4 * i + 3];
+                this.particleColor[4 * i] = cr + (this.baseColor.r - cr) * t;
+                this.particleColor[4 * i + 1] = cg + (this.baseColor.g - cg) * t;
+                this.particleColor[4 * i + 2] = cb + (this.baseColor.b - cb) * t;
+                this.particleColor[4 * i + 3] = ca + (this.baseColor.a - ca) * t;
             }
         }
     }
@@ -591,24 +595,26 @@ export class FlipFluid {
             this.particleVel[2 * i] = 0.0;
             this.particleVel[2 * i + 1] = 0.0;
 
-            this.particleColor[3 * i] = this.baseColor.r;
-            this.particleColor[3 * i + 1] = this.baseColor.g;
-            this.particleColor[3 * i + 2] = this.baseColor.b;
+            this.particleColor[4 * i] = this.baseColor.r;
+            this.particleColor[4 * i + 1] = this.baseColor.g;
+            this.particleColor[4 * i + 2] = this.baseColor.b;
+            this.particleColor[4 * i + 3] = this.baseColor.a;
         }
 
         this.numParticles += newParticles;
     }
 
-    setFluidColor(baseColor: { r: number; g: number; b: number }): void {
+    setFluidColor(baseColor: { r: number; g: number; b: number; a: number }): void {
         this.baseColor = { ...baseColor };
         for (let i = 0; i < this.maxParticles; i++) {
-            this.particleColor[3 * i] = baseColor.r;
-            this.particleColor[3 * i + 1] = baseColor.g;
-            this.particleColor[3 * i + 2] = baseColor.b;
+            this.particleColor[4 * i] = baseColor.r;
+            this.particleColor[4 * i + 1] = baseColor.g;
+            this.particleColor[4 * i + 2] = baseColor.b;
+            this.particleColor[4 * i + 3] = baseColor.a;
         }
     }
 
-    setFoamColor(foamColor: { r: number; g: number; b: number }): void {
+    setFoamColor(foamColor: { r: number; g: number; b: number; a: number }): void {
         this.foamColor = { ...foamColor };
     }
 

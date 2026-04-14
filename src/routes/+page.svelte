@@ -17,50 +17,50 @@
 
 	const fluidTypes = [
 		{
-			fluidColor: { r: 0.5, g: 0.5, b: 0.5 },
-			foamColor: { r: 0.5, g: 0.5, b: 0.5 },
+			fluidColor: { r: 0.5, g: 0.5, b: 0.5, a: 0.2 },
+			foamColor: { r: 0.5, g: 0.5, b: 0.5, a: 0.2 },
 			colorDiffusionCoeff: 0.0008,
 			foamReturnRate: 0.5
 		},
 		{
-			fluidColor: { r: 0.0, g: 0.7, b: 0.8 },
-			foamColor: { r: 0.0, g: 0.7, b: 0.8 },
+			fluidColor: { r: 0.0, g: 0.7, b: 0.8, a: 0.2 },
+			foamColor: { r: 0.0, g: 0.7, b: 0.8, a: 0.2 },
 			colorDiffusionCoeff: 0.0012,
 			foamReturnRate: 0.6
 		},
 		{
-			fluidColor: { r: 1.0, g: 0.4, b: 0.1 },
-			foamColor: { r: 1.0, g: 0.4, b: 0.1 },
+			fluidColor: { r: 1.0, g: 0.4, b: 0.1, a: 0.2 },
+			foamColor: { r: 1.0, g: 0.4, b: 0.1, a: 0.2 },
 			colorDiffusionCoeff: 0.0004,
 			foamReturnRate: 0.3
 		},
 		{
-			fluidColor: { r: 0.5, g: 0.2, b: 0.9 },
-			foamColor: { r: 0.5, g: 0.2, b: 0.9 },
+			fluidColor: { r: 0.5, g: 0.2, b: 0.9, a: 0.2 },
+			foamColor: { r: 0.5, g: 0.2, b: 0.9, a: 0.2 },
 			colorDiffusionCoeff: 0.001,
 			foamReturnRate: 0.7
 		},
 		{
-			fluidColor: { r: 0.1, g: 0.6, b: 0.4 },
-			foamColor: { r: 0.1, g: 0.6, b: 0.4 },
+			fluidColor: { r: 0.1, g: 0.6, b: 0.4, a: 0.2 },
+			foamColor: { r: 0.1, g: 0.6, b: 0.4, a: 0.2 },
 			colorDiffusionCoeff: 0.0015,
 			foamReturnRate: 0.4
 		},
 		{
-			fluidColor: { r: 0.9, g: 0.5, b: 0.6 },
-			foamColor: { r: 0.9, g: 0.5, b: 0.6 },
+			fluidColor: { r: 0.9, g: 0.5, b: 0.6, a: 0.2 },
+			foamColor: { r: 0.9, g: 0.5, b: 0.6, a: 0.2 },
 			colorDiffusionCoeff: 0.0006,
 			foamReturnRate: 0.8
 		},
 		{
-			fluidColor: { r: 0.3, g: 0.7, b: 0.9 },
-			foamColor: { r: 0.3, g: 0.7, b: 0.9 },
+			fluidColor: { r: 0.3, g: 0.7, b: 0.9, a: 0.2 },
+			foamColor: { r: 0.3, g: 0.7, b: 0.9, a: 0.2 },
 			colorDiffusionCoeff: 0.0009,
 			foamReturnRate: 0.5
 		},
 		{
-			fluidColor: { r: 0.9, g: 0.7, b: 0.2 },
-			foamColor: { r: 0.9, g: 0.7, b: 0.2 },
+			fluidColor: { r: 0.9, g: 0.7, b: 0.2, a: 0.2 },
+			foamColor: { r: 0.9, g: 0.7, b: 0.2, a: 0.2 },
 			colorDiffusionCoeff: 0.0005,
 			foamReturnRate: 0.2
 		}
