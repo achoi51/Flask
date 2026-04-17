@@ -250,7 +250,7 @@
 <div
 	class="relative flex h-screen flex-col items-center justify-center bg-gradient-to-b from-gray-900 via-gray-800 to-gray-950"
 >
-	<!-- Add color change button in top left -->
+	<!--change color button-->
 	<button
 		onpointerdown={(e) => e.stopPropagation()}
 		onclick={onTap}

@@ -604,6 +604,10 @@ export class FlipFluid {
         this.numParticles += newParticles;
     }
 
+    clearParticles(): void {
+        this.numParticles = 0;
+    }
+
     setFluidColor(baseColor: { r: number; g: number; b: number; a: number }): void {
         this.baseColor = { ...baseColor };
         for (let i = 0; i < this.maxParticles; i++) {

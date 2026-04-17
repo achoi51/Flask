@@ -47,7 +47,7 @@
 	const overRelaxation = 1.7;
 	const compensateDrift = true;
 	const separateParticles = true;
-	const showParticles = false; // set true to overlay raw particles on top
+	const showParticles = true; // set true to overlay raw particles on top
 	const showFluid = true;      // metaball fluid surface
 	const showGrid = false;
 	const damping = 0.95;
@@ -163,6 +163,12 @@
 		y = simHeight - ((mouse.y / window.innerHeight) * simHeight) + yOffset;
 		fluid.addNewParticles(numberOfParticles, x, y);
 	};
+
+	function clearParticles() {
+		if (fluid) {
+			fluid.clearParticles();
+		}
+	}
 	
 	function handleMousemove(event: any) {
 		mouse.x = event.clientX;
@@ -206,6 +212,13 @@
   on:touchend={() => isHold = false}
   on:touchmove={(e) => { e.preventDefault(); mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; }}
 />
-
+<!-- clear particles button -->
+<button
+		onpointerdown={(e) => e.stopPropagation()}
+		onclick={clearParticles}
+		class="absolute top-15 left-4 z-20 rounded-lg bg-red-500 px-4 py-2 font-semibold text-white shadow-lg transition-colors hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-gray-900 focus:outline-none"
+	>
+		Clear Particles
+</button>
 
 <canvas bind:this={canvas} class="absolute inset-0 z-10 h-full w-full touch-none"></canvas>
