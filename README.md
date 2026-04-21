@@ -1,4 +1,4 @@
-# mobile-flask-sim
+# Flask
 
 A real-time chemistry simulation that runs in your browser and reacts to mobile device sensors. Liquids, gases, and solids that interact with each other. Built using the FLIP (Fluid-Implicit-Particle) technique for realistic fluid dynamics.
 
