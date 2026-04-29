@@ -237,7 +237,7 @@ export class FlipFluid {
         this.numParticles--;
     }
 
-    handleParticleCollisions(): void {
+    handleParticleCollisions(allowTopExit: boolean): void {
         const h = 1.0 / this.fInvSpacing;
         const r = this.particleRadius;
 
@@ -250,8 +250,7 @@ export class FlipFluid {
             let x = this.particlePos[2 * i];
             let y = this.particlePos[2 * i + 1];
 
-            // Delete particles that leave through the top
-            if (y > maxY) {
+            if (y > maxY && allowTopExit) {
                 this.removeParticle(i);
                 continue;
             }
@@ -526,7 +525,8 @@ export class FlipFluid {
         overRelaxation: number,
         compensateDrift: boolean,
         separateParticles: boolean,
-        damping: number = 1.00
+        damping: number = 1.00,
+        allowTopExit: boolean = true
     ): void {
         const numSubSteps = 1;
         const sdt = dt / numSubSteps;
@@ -534,7 +534,7 @@ export class FlipFluid {
         for (let step = 0; step < numSubSteps; step++) {
             this.integrateParticles(sdt, gravityX, gravityY, damping);
             if (separateParticles) this.pushParticlesApart(numParticleIters);
-            this.handleParticleCollisions();
+            this.handleParticleCollisions(allowTopExit);
             this.transferVelocities(true, flipRatio);
             this.updateParticleDensity();
             this.solveIncompressibility(numPressureIters, sdt, overRelaxation, compensateDrift);

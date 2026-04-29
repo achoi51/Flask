@@ -250,7 +250,21 @@ export class FlipGas {
         }
     }
 
-    handleParticleCollisions(): void {
+    removeParticle(index: number): void {
+        if (index < 0 || index >= this.numParticles) return;
+        const last = this.numParticles - 1;
+        if (index !== last) {
+            // Swap position
+            this.particlePos[2 * index] = this.particlePos[2 * last];
+            this.particlePos[2 * index + 1] = this.particlePos[2 * last + 1];
+            // Swap velocity
+            this.particleVel[2 * index] = this.particleVel[2 * last];
+            this.particleVel[2 * index + 1] = this.particleVel[2 * last + 1];
+        }
+        this.numParticles--;
+    }
+
+    handleParticleCollisions(allowTopExit: boolean): void {
         const h = 1.0 / this.fInvSpacing;
         const r = this.particleRadius;
 
@@ -259,9 +273,14 @@ export class FlipGas {
         const minY = h + r;
         const maxY = (this.fNumY - 1) * h - r;
 
-        for (let i = 0; i < this.numParticles; i++) {
+        for (let i = this.numParticles - 1; i >= 0; i--) {
             let x = this.particlePos[2 * i];
             let y = this.particlePos[2 * i + 1];
+
+            if (y > maxY && allowTopExit) {
+                    this.removeParticle(i);
+                    continue;
+            }
 
             // Wall collisions
             if (x < minX) {
@@ -575,7 +594,8 @@ export class FlipGas {
         overRelaxation: number,
         compensateDrift: boolean,
         separateParticles: boolean,
-        damping: number = 1.00
+        damping: number = 1.00,
+        allowTopExit: boolean = true
     ): void {
         const numSubSteps = 1;
         const sdt = dt / numSubSteps;
@@ -583,7 +603,7 @@ export class FlipGas {
         for (let step = 0; step < numSubSteps; step++) {
             this.integrateParticles(sdt, gravityX, gravityY, damping);
             if (separateParticles) this.pushParticlesApart(numParticleIters);
-            this.handleParticleCollisions();
+            this.handleParticleCollisions(allowTopExit);
             this.transferVelocities(true, flipRatio);
             this.updateParticleDensity();
             this.solveIncompressibility(numPressureIters, sdt, overRelaxation, compensateDrift);

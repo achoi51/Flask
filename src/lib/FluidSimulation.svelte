@@ -31,6 +31,7 @@
 		foamColor = { r: 0.85, g: 0.85, b: 0.9, a: 0.22 },
 		colorDiffusionCoeff = 0.001,
 		foamReturnRate = 0.6,
+		allowTopExit = true,
 		onclick
 	}: {
 		gravity?: { x: number; y: number };
@@ -43,6 +44,7 @@
 		foamColor?: { r: number; g: number; b: number; a: number };
 		colorDiffusionCoeff?: number;
 		foamReturnRate?: number;
+		allowTopExit?: boolean;
 		onclick?: () => void;
 	} = $props();
 
@@ -132,7 +134,8 @@
 				overRelaxation,
 				compensateDrift,
 				separateParticles,
-				damping
+				damping,
+				allowTopExit
 			);
 		}
 
@@ -148,7 +151,8 @@
 				overRelaxation,
 				compensateDrift,
 				separateParticles,
-				damping
+				damping,
+				allowTopExit
 			);
 		}
 

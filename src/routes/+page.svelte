@@ -67,6 +67,7 @@
 
 	let currentFluidColor = defaultFluidColor;
 	let currentGasColor = defaultGasColor;
+	let allowTopExit = $state(true);
 
 	function toCSS(c: { r: number; g: number; b: number }) {
 		return `rgb(${Math.round(c.r * 255)}, ${Math.round(c.g * 255)}, ${Math.round(c.b * 255)})`;
@@ -272,6 +273,7 @@
 			{showLiquidParticles}
 			gasColor={activeGasColor}
 			foamColor={activeFoamColor}
+			allowTopExit={allowTopExit}
 			spawnMaterial={{ category: selectedMaterial.category, id: selectedMaterial.id }}
 		/>
 
@@ -297,6 +299,14 @@
 					>
 						<span>Show Liquid Particles</span>
 						<span>{showLiquidParticles ? 'ON' : 'OFF'}</span>
+					</button>
+
+					<button
+						onclick={() => (allowTopExit = !allowTopExit)}
+						class="mb-3 flex w-full items-center justify-between rounded-md bg-white/10 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+					>
+						<span>Allow Top Exit</span>
+						<span>{allowTopExit ? 'ON' : 'OFF'}</span>
 					</button>
 
 					<div class="mb-3 grid grid-cols-3 gap-1">
