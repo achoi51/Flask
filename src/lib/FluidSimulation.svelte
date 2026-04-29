@@ -72,7 +72,7 @@
 	const showGrid = false;
 	const damping = 0.99;
 	const clickSpawnCount = 40;
-	const gasSpawnCount = 5;
+	const gasSpawnCount = 10;
 	const clickSpawnRadius = 0.12;
 	const clickSpawnSpeed = 0.0;
 
@@ -272,7 +272,7 @@
 
 		for (const { gas } of gases) {
 			gasRenderer.render(gas, {
-				showFluid: true,
+				showGas: true,
 				showParticles: false,
 				showGrid: false,
 				simWidth,
@@ -564,7 +564,7 @@
 			fluid.setFluidColor(fluidColor);
 		}
 		for (const { gas } of gases) {
-			gas.setFluidColor(gasColor);
+			gas.setGasColor(gasColor);
 			gas.setFoamColor(foamColor);
 			gas.setColorDiffusionCoeff(colorDiffusionCoeff);
 			gas.setFoamReturnRate(foamReturnRate);

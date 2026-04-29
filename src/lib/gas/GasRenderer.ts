@@ -101,7 +101,7 @@ const compositeVertexShader = `
     }
 `;
 
-// Soft volumetric edges instead of a hard fluid surface cutoff
+// Soft volumetric edges instead of a hard gas surface cutoff
 const compositeFragmentShader = `
     precision mediump float;
     varying vec2 vTexCoord;
@@ -119,7 +119,7 @@ const compositeFragmentShader = `
 export interface RenderConfig {
     showParticles: boolean;
     showGrid: boolean;
-    showFluid: boolean;
+    showGas: boolean;
     simWidth: number;
     simHeight: number;
 }
@@ -248,9 +248,9 @@ export class GasRenderer {
         return buffer;
     }
 
-    render(fluid: FlipGas, config: RenderConfig): void {
-        if (config.showFluid) this.renderFluid(fluid, config);
-        if (config.showParticles || config.showGrid) this.renderPoints(fluid, config);
+    render(gas: FlipGas, config: RenderConfig): void {
+        if (config.showGas) this.renderGas(gas, config);
+        if (config.showParticles || config.showGrid) this.renderPoints(gas, config);
     }
 
     private ensureAccumFramebuffer(width: number, height: number): void {
@@ -280,7 +280,7 @@ export class GasRenderer {
         this.accumHeight = height;
     }
 
-    private renderFluid(fluid: FlipGas, config: RenderConfig): void {
+    private renderGas(gas: FlipGas, config: RenderConfig): void {
         const gl = this.gl;
         const w = gl.canvas.width;
         const h = gl.canvas.height;
@@ -308,15 +308,15 @@ export class GasRenderer {
         gl.enableVertexAttribArray(alphaLoc);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.pointVertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, fluid.particlePos.subarray(0, 2 * fluid.numParticles), gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, gas.particlePos.subarray(0, 2 * gas.numParticles), gl.DYNAMIC_DRAW);
         gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, this.pointColorBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, fluid.particleColor.subarray(0, 4 * fluid.numParticles), gl.DYNAMIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, gas.particleColor.subarray(0, 4 * gas.numParticles), gl.DYNAMIC_DRAW);
         gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 16, 0);
         gl.vertexAttribPointer(alphaLoc, 1, gl.FLOAT, false, 16, 12);
 
-        gl.drawArrays(gl.POINTS, 0, fluid.numParticles);
+        gl.drawArrays(gl.POINTS, 0, gas.numParticles);
         gl.disableVertexAttribArray(posLoc);
         gl.disableVertexAttribArray(colorLoc);
         gl.disableVertexAttribArray(alphaLoc);
@@ -343,7 +343,7 @@ export class GasRenderer {
         gl.bindTexture(gl.TEXTURE_2D, null);
     }
 
-    private renderPoints(fluid: FlipGas, config: RenderConfig): void {
+    private renderPoints(gas: FlipGas, config: RenderConfig): void {
         const gl = this.gl;
         gl.useProgram(this.pointShader);
         gl.uniform2f(this.pointShaderUniforms.domainSize, config.simWidth, config.simHeight);
@@ -356,17 +356,17 @@ export class GasRenderer {
         gl.enableVertexAttribArray(alphaLoc);
 
         if (config.showGrid) {
-            const pointSize = 0.9 * fluid.h / config.simWidth * gl.canvas.width;
+            const pointSize = 0.9 * gas.h / config.simWidth * gl.canvas.width;
             gl.uniform1f(this.pointShaderUniforms.pointSize, pointSize);
             gl.uniform1f(this.pointShaderUniforms.drawDisk, 0.0);
 
             if (!this.gridVertBufferInitialized) {
-                const cellCenters = new Float32Array(2 * fluid.fNumCells);
+                const cellCenters = new Float32Array(2 * gas.fNumCells);
                 let p = 0;
-                for (let i = 0; i < fluid.fNumX; i++) {
-                    for (let j = 0; j < fluid.fNumY; j++) {
-                        cellCenters[p++] = (i + 0.5) * fluid.h;
-                        cellCenters[p++] = (j + 0.5) * fluid.h;
+                for (let i = 0; i < gas.fNumX; i++) {
+                    for (let j = 0; j < gas.fNumY; j++) {
+                        cellCenters[p++] = (i + 0.5) * gas.h;
+                        cellCenters[p++] = (j + 0.5) * gas.h;
                     }
                 }
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.gridVertBuffer);
@@ -378,27 +378,27 @@ export class GasRenderer {
             gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.gridColorBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, fluid.cellColor, gl.DYNAMIC_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, gas.cellColor, gl.DYNAMIC_DRAW);
             gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 0, 0);
 
-            gl.drawArrays(gl.POINTS, 0, fluid.fNumCells);
+            gl.drawArrays(gl.POINTS, 0, gas.fNumCells);
         }
 
         if (config.showParticles) {
-            const pointSize = 2.0 * fluid.particleRadius / config.simWidth * gl.canvas.width;
+            const pointSize = 2.0 * gas.particleRadius / config.simWidth * gl.canvas.width;
             gl.uniform1f(this.pointShaderUniforms.pointSize, pointSize);
             gl.uniform1f(this.pointShaderUniforms.drawDisk, 1.0);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.pointVertexBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, fluid.particlePos.subarray(0, 2 * fluid.numParticles), gl.DYNAMIC_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, gas.particlePos.subarray(0, 2 * gas.numParticles), gl.DYNAMIC_DRAW);
             gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
 
             gl.bindBuffer(gl.ARRAY_BUFFER, this.pointColorBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, fluid.particleColor.subarray(0, 4 * fluid.numParticles), gl.DYNAMIC_DRAW);
+            gl.bufferData(gl.ARRAY_BUFFER, gas.particleColor.subarray(0, 4 * gas.numParticles), gl.DYNAMIC_DRAW);
             gl.vertexAttribPointer(colorLoc, 3, gl.FLOAT, false, 16, 0);
             gl.vertexAttribPointer(alphaLoc, 1, gl.FLOAT, false, 16, 12);
 
-            gl.drawArrays(gl.POINTS, 0, fluid.numParticles);
+            gl.drawArrays(gl.POINTS, 0, gas.numParticles);
         }
 
         gl.disableVertexAttribArray(posLoc);

@@ -43,6 +43,10 @@ export class FlipGas {
     foamColor: { r: number; g: number; b: number, a: number };
     colorDiffusionCoeff: number;
     foamReturnRate: number; // per-second rate towards base color
+    gasCompressibility: number;
+    wallRestitution: number;
+    separationFactor: number;
+    thermalNoise: number;
 
     // Particle grid
     particleRadius: number;
@@ -101,6 +105,10 @@ export class FlipGas {
         this.foamColor = foamColor || { r: 0.7, g: 0.9, b: 1.0, a: 0.5 };
         this.colorDiffusionCoeff = colorDiffusionCoeff;
         this.foamReturnRate = foamReturnRate;
+        this.gasCompressibility = 0.98;
+        this.wallRestitution = 0.85;
+        this.separationFactor = 0.22;
+        this.thermalNoise = 0.25;
 
         for (let i = 0; i < this.maxParticles; i++) {
             // Single base color for all particles
@@ -137,7 +145,13 @@ export class FlipGas {
             this.particleVel[2 * i] += dt * gravityX;     // Apply X component of gravity
             this.particleVel[2 * i + 1] += dt * gravityY; // Apply Y component of gravity
 
-            // Apply damping to reduce velocity over time
+            // Add small thermal motion to make gas diffuse and stay more chaotic
+            if (this.thermalNoise > 0.0) {
+                this.particleVel[2 * i] += (Math.random() - 0.5) * this.thermalNoise * dt;
+                this.particleVel[2 * i + 1] += (Math.random() - 0.5) * this.thermalNoise * dt;
+            }
+
+            // Apply damping to reduce excessive velocities over time
             this.particleVel[2 * i] *= damping;
             this.particleVel[2 * i + 1] *= damping;
 
@@ -178,7 +192,7 @@ export class FlipGas {
             this.cellParticleIds[this.firstCellParticle[cellNr]] = i;
         }
 
-        const minDist = 2.0 * this.particleRadius;
+        const minDist = 0.1 * this.particleRadius;
         const minDist2 = minDist * minDist;
 
         for (let iter = 0; iter < numIters; iter++) {
@@ -212,9 +226,9 @@ export class FlipGas {
                             if (d2 > minDist2 || d2 === 0.0) continue;
 
                             const d = Math.sqrt(d2);
-                            const s = 0.5 * (minDist - d) / d;
-                            const deltaX = dx * s;
-                            const deltaY = dy * s;
+                            const s = this.separationFactor * (minDist - d) / d;
+                            const deltaX = dx * s * 0.01;
+                            const deltaY = dy * s * 0.01;
 
                             this.particlePos[2 * i] -= deltaX;
                             this.particlePos[2 * i + 1] -= deltaY;
@@ -252,19 +266,19 @@ export class FlipGas {
             // Wall collisions
             if (x < minX) {
                 x = minX;
-                this.particleVel[2 * i] = 0.0;
+                this.particleVel[2 * i] = Math.abs(this.particleVel[2 * i]) * this.wallRestitution;
             }
             if (x > maxX) {
                 x = maxX;
-                this.particleVel[2 * i] = 0.0;
+                this.particleVel[2 * i] = -Math.abs(this.particleVel[2 * i]) * this.wallRestitution;
             }
             if (y < minY) {
                 y = minY;
-                this.particleVel[2 * i + 1] = 0.0;
+                this.particleVel[2 * i + 1] = Math.abs(this.particleVel[2 * i + 1]) * this.wallRestitution;
             }
             if (y > maxY) {
                 y = maxY;
-                this.particleVel[2 * i + 1] = 0.0;
+                this.particleVel[2 * i + 1] = -Math.abs(this.particleVel[2 * i + 1]) * this.wallRestitution;
             }
 
             this.particlePos[2 * i] = x;
@@ -305,15 +319,15 @@ export class FlipGas {
         // Calculate rest density
         if (this.particleRestDensity === 0.0) {
             let sum = 0.0;
-            let numFluidCells = 0;
+            let numGasCells = 0;
             for (let i = 0; i < this.fNumCells; i++) {
                 if (this.cellType[i] === GAS_CELL) {
                     sum += d[i];
-                    numFluidCells++;
+                    numGasCells++;
                 }
             }
-            if (numFluidCells > 0) {
-                this.particleRestDensity = sum / numFluidCells;
+            if (numGasCells > 0) {
+                this.particleRestDensity = sum / numGasCells;
             }
         }
     }
@@ -432,7 +446,7 @@ export class FlipGas {
         this.prevV.set(this.v);
 
         const n = this.fNumY;
-        const cp = this.density * this.h / dt;
+        const cp = this.density * this.h / dt * this.gasCompressibility;
 
         for (let iter = 0; iter < numIters; iter++) {
             for (let i = 1; i < this.fNumX - 1; i++) {
@@ -604,7 +618,7 @@ export class FlipGas {
         this.numParticles += newParticles;
     }
 
-    setFluidColor(baseColor: { r: number; g: number; b: number; a: number }): void {
+    setGasColor(baseColor: { r: number; g: number; b: number; a: number }): void {
         this.baseColor = { ...baseColor };
         for (let i = 0; i < this.maxParticles; i++) {
             this.particleColor[4 * i] = baseColor.r;
