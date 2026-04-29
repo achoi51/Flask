@@ -508,41 +508,19 @@ export class FlipGas {
     }
 
     updateParticleColors(dt: number): void {
-        // Apply foam when in low-density regions; otherwise decay color back to base using time-based rate
-        const h1 = this.fInvSpacing;
+        // Decay color back to base using time-based rate (foam disabled for consistent rendering)
         const t = Math.max(0, Math.min(1, this.foamReturnRate * dt));
 
         for (let i = 0; i < this.numParticles; i++) {
-            const x = this.particlePos[2 * i];
-            const y = this.particlePos[2 * i + 1];
-            const xi = clamp(Math.floor(x * h1), 1, this.fNumX - 1);
-            const yi = clamp(Math.floor(y * h1), 1, this.fNumY - 1);
-            const cellNr = xi * this.fNumY + yi;
-
-            let applyFoam = false;
-            const d0 = this.particleRestDensity;
-            if (d0 > 0.0) {
-                const relDensity = this.particleDensity[cellNr] / d0;
-                if (relDensity < 0.7) applyFoam = true;
-            }
-
-            if (applyFoam) {
-                // Set to foam color immediately while in foam region
-                this.particleColor[4 * i] = this.foamColor.r;
-                this.particleColor[4 * i + 1] = this.foamColor.g;
-                this.particleColor[4 * i + 2] = this.foamColor.b;
-                this.particleColor[4 * i + 3] = this.foamColor.a;
-            } else {
-                // Lerp back to base color at a controllable rate
-                const cr = this.particleColor[4 * i];
-                const cg = this.particleColor[4 * i + 1];
-                const cb = this.particleColor[4 * i + 2];
-                const ca = this.particleColor[4 * i + 3];
-                this.particleColor[4 * i] = cr + (this.baseColor.r - cr) * t;
-                this.particleColor[4 * i + 1] = cg + (this.baseColor.g - cg) * t;
-                this.particleColor[4 * i + 2] = cb + (this.baseColor.b - cb) * t;
-                this.particleColor[4 * i + 3] = ca + (this.baseColor.a - ca) * t;
-            }
+            // Lerp back to base color at a controllable rate
+            const cr = this.particleColor[4 * i];
+            const cg = this.particleColor[4 * i + 1];
+            const cb = this.particleColor[4 * i + 2];
+            const ca = this.particleColor[4 * i + 3];
+            this.particleColor[4 * i] = cr + (this.baseColor.r - cr) * t;
+            this.particleColor[4 * i + 1] = cg + (this.baseColor.g - cg) * t;
+            this.particleColor[4 * i + 2] = cb + (this.baseColor.b - cb) * t;
+            this.particleColor[4 * i + 3] = ca + (this.baseColor.a - ca) * t;
         }
     }
 
