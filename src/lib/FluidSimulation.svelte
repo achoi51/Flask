@@ -76,6 +76,9 @@
 	const gasSpawnCount = 10;
 	const clickSpawnRadius = 0.12;
 	const clickSpawnSpeed = 0.0;
+	let currentTime = 0;
+	let lastTime = 0;
+	const solidSpawnSpeed = 300;
 
 	// Particle count controls
 	const relWaterWidth = 0.6; // Water width as fraction of tank (0.1 to 1.0)
@@ -287,6 +290,9 @@
 	function update() {
 		simulate();
 		render();
+
+		currentTime = performance.now();
+
 		animationId = requestAnimationFrame(update);
 	}
 
@@ -295,11 +301,14 @@
 	}
 
 	function spawnSolidAt(x: number, y: number, solidId: string) {
-		const newSolid = new Element(solidId, 1.0, getSolidImage(solidId), elementWidth, elementHeight, x, y);
-		const halfW = newSolid.getWidth() * 0.5;
-		const halfH = newSolid.getHeight() * 0.5;
-		newSolid.confineToBounds(halfW, simWidth - halfW, halfH, simHeight - halfH);
-		solidElements = [...solidElements, newSolid];
+		if (currentTime - lastTime > solidSpawnSpeed) {
+			const newSolid = new Element(solidId, 1.0, getSolidImage(solidId), elementWidth, elementHeight, x, y);
+			const halfW = newSolid.getWidth() * 0.5;
+			const halfH = newSolid.getHeight() * 0.5;
+			newSolid.confineToBounds(halfW, simWidth - halfW, halfH, simHeight - halfH);
+			solidElements = [...solidElements, newSolid];
+			lastTime = currentTime;
+		}
 	}
 
 	function createSpawnFluid(liquidId: string): FlipFluid | null {
