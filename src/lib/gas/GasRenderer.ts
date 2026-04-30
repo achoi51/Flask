@@ -142,9 +142,9 @@ export class GasRenderer {
     private accumWidth = 0;
     private accumHeight = 0;
 
-    private influenceRadius = 0.45;  // was 0.22 — larger blobs, wispy spread
-    private accumScale = 0.15;       // was 0.35 — lower peak, requires clusters to show
-    private threshold = 0.25;        // was 0.5  — puffier, more volumetric edges
+    private influenceRadius = 0.5;  // was 0.22 — larger blobs, wispy spread
+    private accumScale = 0.055;       // was 0.35 — lower peak, requires clusters to show
+    private threshold = 0.28;        // was 0.5  — puffier, more volumetric edges
 
     // Cached uniform locations
     private pointShaderUniforms: { [key: string]: WebGLUniformLocation | null } = {};

@@ -107,6 +107,9 @@
 	let lastAcceleration = { x: 0, y: 0, z: 0 };
 	let shakeThreshold = 15;
 	let shakeTimeThreshold = 600;
+	let isShaking = false;
+
+	let yOrientation = 0;
 
 	const requestPermission = async () => {
 		if (!browser) return;
@@ -169,9 +172,13 @@
 		const currentTime = Date.now();
 
 		// Check if shake threshold is exceeded and enough time has passed
-		if (totalDelta > shakeThreshold && currentTime - lastShakeTime > shakeTimeThreshold) {
-			onShake();
+		if (totalDelta > shakeThreshold) {
+			onShake(totalDelta);
 			lastShakeTime = currentTime;
+			isShaking = true;
+		}
+		else {
+			isShaking = false;
 		}
 
 		// Update last acceleration values
@@ -179,7 +186,7 @@
 	};
 
 	const onOrientationChange = (event: DeviceOrientationEvent) => {
-		if (event.beta !== null && event.gamma !== null) {
+		if (event.beta !== null && event.gamma !== null && !isShaking) {
 			const beta = event.beta;
 			const gamma = event.gamma;
 
@@ -193,8 +200,10 @@
 			const gx = sinGamma * cosBeta;
 			const gy = -sinBeta;
 
+			yOrientation = Math.max(-1, Math.min(1, gy));
+
 			gravity.x = MAX_GRAVITY * Math.max(-1, Math.min(1, gx));
-			gravity.y = MAX_GRAVITY * Math.max(-1, Math.min(1, gy));
+			gravity.y = MAX_GRAVITY * yOrientation;
 		}
 	};
 
@@ -223,7 +232,14 @@
 		}
 	});
 
-	const onShake = () => {};
+	const onShake = (magnitude: number) => {
+		gravity.x = Math.min(MAX_GRAVITY * 8, magnitude * magnitude * 4);
+		gravity.y = Math.min(MAX_GRAVITY * 8, magnitude * magnitude * 4) * yOrientation;
+
+		if (Math.random() < 0.5) {
+			gravity.x *= -1;
+		}
+	};
 </script>
 
 <div
