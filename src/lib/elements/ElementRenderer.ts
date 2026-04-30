@@ -72,9 +72,7 @@ export class ElementRenderer {
     private texturedMeshShader: WebGLProgram;
     private meshVertexBuffer: WebGLBuffer;
     private meshUvBuffer: WebGLBuffer;
-    private elementTexture: WebGLTexture | null = null;
-    private elementTextureLoaded = false;
-    private elementTextureSrc: string | null = null;
+    private textureCache: Record<string, { texture: WebGLTexture | null; loaded: boolean }> = {};
 
     constructor(gl: WebGLRenderingContext) {
         this.gl = gl;
@@ -88,8 +86,8 @@ export class ElementRenderer {
         const gl = this.gl;
         const { element } = config;
 
-        if (element.imageSrc && element.imageSrc !== this.elementTextureSrc) {
-            this.loadElementImage(element.imageSrc);
+        if (element.imageSrc) {
+            this.ensureTextureLoaded(element.imageSrc);
         }
 
         const vertices = new Float32Array([
@@ -106,7 +104,8 @@ export class ElementRenderer {
             1.0, 1.0,
         ]);
 
-        if (this.elementTextureLoaded && this.elementTexture) {
+        const textureData = element.imageSrc ? this.textureCache[element.imageSrc] : undefined;
+        if (textureData && textureData.loaded && textureData.texture) {
             gl.useProgram(this.texturedMeshShader);
 
             const posLoc = gl.getAttribLocation(this.texturedMeshShader, 'attrPosition');
@@ -129,7 +128,7 @@ export class ElementRenderer {
             gl.uniform1f(gl.getUniformLocation(this.texturedMeshShader, 'touchMix'), element.isTouching ? 0.25 : 0.0);
 
             gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, this.elementTexture);
+            gl.bindTexture(gl.TEXTURE_2D, textureData.texture);
             gl.uniform1i(gl.getUniformLocation(this.texturedMeshShader, 'elementTexture'), 0);
 
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -165,18 +164,19 @@ export class ElementRenderer {
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
     }
 
-    private loadElementImage(src: string): void {
+    private ensureTextureLoaded(src: string): void {
+        if (this.textureCache[src]) {
+            return; // Already loaded or loading
+        }
+
         const gl = this.gl;
-        this.elementTextureLoaded = false;
+        const textureData = { texture: null as WebGLTexture | null, loaded: false };
+        this.textureCache[src] = textureData;
 
         const img = new Image();
         img.onload = () => {
             const texture = gl.createTexture();
             if (!texture) return;
-
-            if (this.elementTexture) {
-                gl.deleteTexture(this.elementTexture);
-            }
 
             gl.bindTexture(gl.TEXTURE_2D, texture);
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);
@@ -186,10 +186,13 @@ export class ElementRenderer {
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
 
-            this.elementTexture = texture;
-            this.elementTextureLoaded = true;
-            this.elementTextureSrc = src;
+            textureData.texture = texture;
+            textureData.loaded = true;
             gl.bindTexture(gl.TEXTURE_2D, null);
+        };
+
+        img.onerror = () => {
+            console.error('Failed to load image:', src);
         };
 
         img.src = src;

@@ -53,10 +53,9 @@
 	let gases: Array<{ id: string; gas: FlipGas }> = [];
 	let renderer: FluidRenderer;
 	let gasRenderer: GasRenderer;
-	let solidElement: Element;
+	let solidElements: Element[] = [];
 	let animationId: number;
 	let isDragging = false;
-	let fluidTouchingElement = false;
 	let activeSpawnFluid: FlipFluid | null = null;
 	let activeSpawnGasId: string | null = null;
 	let maxTotalParticles = 0;
@@ -121,7 +120,7 @@
 	}
 
 	function simulate() {
-		if (!solidElement) return;
+		if (solidElements.length === 0) return;
 
 		for (const fluid of fluids) {
 			fluid.simulate(
@@ -169,13 +168,13 @@
 
 		resolveInterFluidCollisions(interFluidCollisionIters);
 
-		solidElement.step(dt, gravity.x, gravity.y, damping);
+		for (const solid of solidElements) {
+			solid.step(dt, gravity.x, gravity.y, damping);
 
-		const halfW = solidElement.getWidth() * 0.5;
-		const halfH = solidElement.getHeight() * 0.5;
-		solidElement.confineToBounds(halfW, simWidth - halfW, halfH, simHeight - halfH);
-
-		fluidTouchingElement = fluids.some((fluid) => isFluidTouchingElement(fluid, solidElement));
+			const halfW = solid.getWidth() * 0.5;
+			const halfH = solid.getHeight() * 0.5;
+			solid.confineToBounds(halfW, simWidth - halfW, halfH, simHeight - halfH);
+		}
 	}
 
 	function getTotalParticles(): number {
@@ -256,7 +255,7 @@
 	}
 
 	function render() {
-		if (!renderer || !solidElement) return;
+		if (!renderer || solidElements.length === 0) return;
 
 		renderer.renderFluids(fluids, {
 			showFluid: true,
@@ -264,14 +263,14 @@
 			showGrid,
 			simWidth,
 			simHeight,
-			element: {
-				x: solidElement.getX(),
-				y: solidElement.getY(),
-				width: solidElement.getWidth(),
-				height: solidElement.getHeight(),
-				imageSrc: solidElement.getImageSrc(),
-				isTouching: fluidTouchingElement
-			}
+			elements: solidElements.map((element) => ({
+				x: element.getX(),
+				y: element.getY(),
+				width: element.getWidth(),
+				height: element.getHeight(),
+				imageSrc: element.getImageSrc(),
+				isTouching: fluids.some((fluid) => isFluidTouchingElement(fluid, element))
+			}))
 		});
 
 		for (const { gas } of gases) {
@@ -296,10 +295,11 @@
 	}
 
 	function spawnSolidAt(x: number, y: number, solidId: string) {
-		solidElement = new Element(solidId, 1.0, getSolidImage(solidId), elementWidth, elementHeight, x, y);
-		const halfW = solidElement.getWidth() * 0.5;
-		const halfH = solidElement.getHeight() * 0.5;
-		solidElement.confineToBounds(halfW, simWidth - halfW, halfH, simHeight - halfH);
+		const newSolid = new Element(solidId, 1.0, getSolidImage(solidId), elementWidth, elementHeight, x, y);
+		const halfW = newSolid.getWidth() * 0.5;
+		const halfH = newSolid.getHeight() * 0.5;
+		newSolid.confineToBounds(halfW, simWidth - halfW, halfH, simHeight - halfH);
+		solidElements = [...solidElements, newSolid];
 	}
 
 	function createSpawnFluid(liquidId: string): FlipFluid | null {
@@ -534,7 +534,7 @@
 		fluids = [baseFluid];
 		renderer = new FluidRenderer(canvas);
 		gasRenderer = new GasRenderer(canvas);
-		solidElement = new Element(
+		const initialSolid = new Element(
 			'block',
 			1.0,
 			carbonImage,
@@ -543,6 +543,7 @@
 			simWidth * 0.5,
 			simHeight * 0.75
 		);
+		solidElements = [initialSolid];
 
 		for (const fluid of fluids) {
 			fluid.setFluidColor(fluidColor);

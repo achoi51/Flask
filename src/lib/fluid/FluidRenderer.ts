@@ -117,6 +117,7 @@ export interface RenderConfig {
     simWidth: number;
     simHeight: number;
     element?: ElementRenderData;
+    elements?: ElementRenderData[];
 }
 
 type PointShaderLocations = {
@@ -307,6 +308,16 @@ export class FluidRenderer {
                 simHeight: config.simHeight,
                 element: config.element,
             });
+        }
+
+        if (config.elements) {
+            for (const element of config.elements) {
+                this.elementRenderer.render({
+                    simWidth: config.simWidth,
+                    simHeight: config.simHeight,
+                    element,
+                });
+            }
         }
     }
 
