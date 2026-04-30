@@ -2,8 +2,11 @@
 	import { onMount } from 'svelte';
 	import { Element } from '$lib/elements/Element';
 	import aluminumImage from '$lib/assets/art/aluminum.png';
+	import brassImage from '$lib/assets/art/brass.png';
+	import bronzeImage from '$lib/assets/art/bronze.png';
 	import caesiumImage from '$lib/assets/art/caesium.png';
 	import calciumImage from '$lib/assets/art/calcium.png';
+	import calciumCarbonateImage from '$lib/assets/art/calcium_carbonate.png';	
 	import carbonImage from '$lib/assets/art/carbon.png';
 	import chromiumImage from '$lib/assets/art/chromium.png';
 	import copperImage from '$lib/assets/art/copper.png';
@@ -12,6 +15,7 @@
 	import potassiumImage from '$lib/assets/art/potassium.png';
 	import silverImage from '$lib/assets/art/silver.png';
 	import silverSulfideImage from '$lib/assets/art/silver_sulfide.png';
+	import steelImage from '$lib/assets/art/steel.png';
 	import sulfurImage from '$lib/assets/art/sulfur.png';
 	import tinImage from '$lib/assets/art/tin.png';
 	import zincImage from '$lib/assets/art/zinc.png';
@@ -90,8 +94,11 @@
 
 	const solidImageById: Record<string, string> = {
 		aluminum: aluminumImage,
+		brass: brassImage,
+		bronze: bronzeImage,
 		caesium: caesiumImage,
 		calcium: calciumImage,
+		calcium_carbonate: calciumCarbonateImage,
 		carbon: carbonImage,
 		chromium: chromiumImage,
 		copper: copperImage,
@@ -100,6 +107,7 @@
 		potassium: potassiumImage,
 		silver: silverImage,
 		silver_sulfide: silverSulfideImage,
+		steel: steelImage,
 		sulfur: sulfurImage,
 		tin: tinImage,
 		zinc: zincImage

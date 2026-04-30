@@ -27,8 +27,11 @@
 
 	const solidOptions: MaterialOption[] = [
 		{ id: 'aluminum', label: 'Aluminum', category: 'solid' },
+		{ id: 'brass', label: 'Brass', category: 'solid'},
+		{ id: 'bronze', label: 'Bronze', category: 'solid'},
 		{ id: 'caesium', label: 'Caesium', category: 'solid' },
 		{ id: 'calcium', label: 'Calcium', category: 'solid' },
+		{ id: 'calcium_carbonate', label: 'Calcium Carbonate', category: 'solid'},
 		{ id: 'carbon', label: 'Carbon', category: 'solid' },
 		{ id: 'chromium', label: 'Chromium', category: 'solid' },
 		{ id: 'copper', label: 'Copper', category: 'solid' },
@@ -37,6 +40,7 @@
 		{ id: 'potassium', label: 'Potassium', category: 'solid' },
 		{ id: 'silver', label: 'Silver', category: 'solid' },
 		{ id: 'silver_sulfide', label: 'Silver Sulfide', category: 'solid' },
+		{ id: 'steel', label: 'Steel', category: 'solid'},
 		{ id: 'sulfur', label: 'Sulfur', category: 'solid' },
 		{ id: 'tin', label: 'Tin', category: 'solid' },
 		{ id: 'zinc', label: 'Zinc', category: 'solid' }
